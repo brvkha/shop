@@ -14,6 +14,8 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
+        type:
+          preferred_uuid_jdbc_type: CHAR
         format_sql: true
 
   flyway:
@@ -29,3 +31,9 @@ management:
     web:
       exposure:
         include: health,info,prometheus
+
+app:
+  dynamo:
+    region: ${AWS_REGION:us-east-1}
+    endpoint: ${DYNAMODB_ENDPOINT:}
+    study-activity-log-table: ${STUDY_ACTIVITY_LOG_TABLE:StudyActivityLog}

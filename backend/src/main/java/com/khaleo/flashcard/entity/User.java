@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
@@ -77,7 +78,10 @@ public class User extends BaseAuditableEntity {
     private List<CardLearningState> learningStates = new ArrayList<>();
 
     @PrePersist
+    @PreUpdate
     void applyDefaults() {
+        normalizeEmail();
+
         if (role == null) {
             role = UserRole.ROLE_USER;
         }
@@ -86,6 +90,15 @@ public class User extends BaseAuditableEntity {
         }
         if (dailyLearningLimit == null) {
             dailyLearningLimit = 9999;
+        }
+        if (dailyLearningLimit < 1 || dailyLearningLimit > 9999) {
+            throw new IllegalStateException("dailyLearningLimit must be between 1 and 9999.");
+        }
+    }
+
+    private void normalizeEmail() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
         }
     }
 }

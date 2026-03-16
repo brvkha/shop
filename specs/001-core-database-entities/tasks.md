@@ -75,20 +75,20 @@
 
 ### Tests for User Story 2
 
-- [ ] T027 [P] [US2] Add contract test for StudyActivityLog record shape in backend/src/test/java/com/khaleo/flashcard/contract/StudyActivityLogContractTest.java
-- [ ] T028 [P] [US2] Add integration test for async activity log publish success path in backend/src/test/java/com/khaleo/flashcard/integration/ActivityLogPublishIT.java
-- [ ] T029 [P] [US2] Add integration test for retry and dead-letter on DynamoDB failure in backend/src/test/java/com/khaleo/flashcard/integration/ActivityLogRetryDeadLetterIT.java
-- [ ] T030 [P] [US2] Add unit test for activity log serialization and rating validation in backend/src/test/java/com/khaleo/flashcard/unit/activitylog/StudyActivityLogValidationTest.java
+- [X] T027 [P] [US2] Add contract test for StudyActivityLog record shape in backend/src/test/java/com/khaleo/flashcard/contract/StudyActivityLogContractTest.java
+- [X] T028 [P] [US2] Add integration test for async activity log publish success path in backend/src/test/java/com/khaleo/flashcard/integration/ActivityLogPublishIT.java
+- [X] T029 [P] [US2] Add integration test for retry and dead-letter on DynamoDB failure in backend/src/test/java/com/khaleo/flashcard/integration/ActivityLogRetryDeadLetterIT.java
+- [X] T030 [P] [US2] Add unit test for activity log serialization and rating validation in backend/src/test/java/com/khaleo/flashcard/unit/activitylog/StudyActivityLogValidationTest.java
 
 ### Implementation for User Story 2
 
-- [ ] T031 [P] [US2] Implement StudyActivityLog DynamoDB model in backend/src/main/java/com/khaleo/flashcard/model/dynamo/StudyActivityLog.java
-- [ ] T032 [P] [US2] Implement DynamoDB table mapper/repository in backend/src/main/java/com/khaleo/flashcard/repository/dynamo/StudyActivityLogRepository.java
-- [ ] T033 [US2] Implement async activity log publisher service in backend/src/main/java/com/khaleo/flashcard/service/activitylog/StudyActivityLogPublisher.java
-- [ ] T034 [US2] Implement retry and dead-letter handling policy in backend/src/main/java/com/khaleo/flashcard/service/activitylog/ActivityLogRetryService.java
-- [ ] T035 [US2] Integrate relational commit callback to async log publisher in backend/src/main/java/com/khaleo/flashcard/service/persistence/RelationalPersistenceService.java
-- [ ] T036 [US2] Define DynamoDB table and userId index for StudyActivityLog in infra/terraform/dynamodb-study-activity.tf
-- [ ] T037 [US2] Add structured logging for async publish, retry, and dead-letter outcomes in backend/src/main/java/com/khaleo/flashcard/service/activitylog/StudyActivityLogPublisher.java
+- [X] T031 [P] [US2] Implement StudyActivityLog DynamoDB model in backend/src/main/java/com/khaleo/flashcard/model/dynamo/StudyActivityLog.java
+- [X] T032 [P] [US2] Implement DynamoDB table mapper/repository in backend/src/main/java/com/khaleo/flashcard/repository/dynamo/StudyActivityLogRepository.java
+- [X] T033 [US2] Implement async activity log publisher service in backend/src/main/java/com/khaleo/flashcard/service/activitylog/StudyActivityLogPublisher.java
+- [X] T034 [US2] Implement retry and dead-letter handling policy in backend/src/main/java/com/khaleo/flashcard/service/activitylog/ActivityLogRetryService.java
+- [X] T035 [US2] Integrate relational commit callback to async log publisher in backend/src/main/java/com/khaleo/flashcard/service/persistence/RelationalPersistenceService.java
+- [X] T036 [US2] Define DynamoDB table and userId index for StudyActivityLog in infra/terraform/dynamodb-study-activity.tf
+- [X] T037 [US2] Add structured logging for async publish, retry, and dead-letter outcomes in backend/src/main/java/com/khaleo/flashcard/service/activitylog/StudyActivityLogPublisher.java
 
 **Checkpoint**: User Story 2 is independently functional and testable.
 
@@ -102,21 +102,21 @@
 
 ### Tests for User Story 3
 
-- [ ] T038 [P] [US3] Add integration test for duplicate email rejection in backend/src/test/java/com/khaleo/flashcard/integration/UserEmailUniquenessIT.java
-- [ ] T039 [P] [US3] Add integration test for card-side content validation in backend/src/test/java/com/khaleo/flashcard/integration/CardContentValidationIT.java
-- [ ] T040 [P] [US3] Add integration test for dailyLearningLimit range validation in backend/src/test/java/com/khaleo/flashcard/integration/UserDailyLimitValidationIT.java
-- [ ] T041 [P] [US3] Add integration test for optimistic lock conflict with one bounded retry in backend/src/test/java/com/khaleo/flashcard/integration/CardLearningStateConcurrencyIT.java
+- [X] T038 [P] [US3] Add integration test for duplicate email rejection in backend/src/test/java/com/khaleo/flashcard/integration/UserEmailUniquenessIT.java
+- [X] T039 [P] [US3] Add integration test for card-side content validation in backend/src/test/java/com/khaleo/flashcard/integration/CardContentValidationIT.java
+- [X] T040 [P] [US3] Add integration test for dailyLearningLimit range validation in backend/src/test/java/com/khaleo/flashcard/integration/UserDailyLimitValidationIT.java
+- [X] T041 [P] [US3] Add integration test for optimistic lock conflict with one bounded retry in backend/src/test/java/com/khaleo/flashcard/integration/CardLearningStateConcurrencyIT.java
 
 ### Implementation for User Story 3
 
-- [ ] T042 [P] [US3] Implement User validation rules for email and dailyLearningLimit in backend/src/main/java/com/khaleo/flashcard/entity/User.java
-- [ ] T043 [P] [US3] Implement Card front/back content validation rules in backend/src/main/java/com/khaleo/flashcard/entity/Card.java
-- [ ] T044 [US3] Implement service-layer guard for missing relationships and orphan prevention in backend/src/main/java/com/khaleo/flashcard/service/persistence/RelationalPersistenceService.java
-- [ ] T045 [US3] Implement optimistic-concurrency retry policy for CardLearningState updates in backend/src/main/java/com/khaleo/flashcard/service/persistence/CardLearningStateUpdateService.java
-- [ ] T046 [US3] Add database-level unique and check constraints refinement in backend/src/main/resources/db/migration/V1__init_schema.sql
-- [ ] T047 [US3] Add deterministic error mapping for validation failures in backend/src/main/java/com/khaleo/flashcard/service/persistence/PersistenceValidationExceptionMapper.java
-- [ ] T048 [US3] Add structured logging for validation and concurrency rejection paths in backend/src/main/java/com/khaleo/flashcard/service/persistence/PersistenceValidationExceptionMapper.java
-- [ ] T049 [US3] Update persistence contract with finalized integrity constraints in specs/001-core-database-entities/contracts/persistence-contract.md
+- [X] T042 [P] [US3] Implement User validation rules for email and dailyLearningLimit in backend/src/main/java/com/khaleo/flashcard/entity/User.java
+- [X] T043 [P] [US3] Implement Card front/back content validation rules in backend/src/main/java/com/khaleo/flashcard/entity/Card.java
+- [X] T044 [US3] Implement service-layer guard for missing relationships and orphan prevention in backend/src/main/java/com/khaleo/flashcard/service/persistence/RelationalPersistenceService.java
+- [X] T045 [US3] Implement optimistic-concurrency retry policy for CardLearningState updates in backend/src/main/java/com/khaleo/flashcard/service/persistence/CardLearningStateUpdateService.java
+- [X] T046 [US3] Add database-level unique and check constraints refinement in backend/src/main/resources/db/migration/V1__init_schema.sql
+- [X] T047 [US3] Add deterministic error mapping for validation failures in backend/src/main/java/com/khaleo/flashcard/service/persistence/PersistenceValidationExceptionMapper.java
+- [X] T048 [US3] Add structured logging for validation and concurrency rejection paths in backend/src/main/java/com/khaleo/flashcard/service/persistence/PersistenceValidationExceptionMapper.java
+- [X] T049 [US3] Update persistence contract with finalized integrity constraints in specs/001-core-database-entities/contracts/persistence-contract.md
 
 **Checkpoint**: User Story 3 is independently functional and testable.
 
@@ -126,13 +126,13 @@
 
 **Purpose**: Finalize documentation, observability wiring, and quality gates across all stories.
 
-- [ ] T050 [P] Document migration and persistence architecture decisions in specs/001-core-database-entities/research.md
-- [ ] T051 [P] Finalize entity relationship and constraint documentation in specs/001-core-database-entities/data-model.md
-- [ ] T052 Add New Relic instrumentation hooks for persistence and async logging paths in backend/src/main/java/com/khaleo/flashcard/config/observability/NewRelicPersistenceInstrumentation.java
-- [ ] T053 Add CloudWatch alarm Terraform definitions for persistence error-rate and retry/dead-letter failures in infra/terraform/cloudwatch-persistence-alarms.tf
-- [ ] T054 Execute full backend test suite and record coverage output in backend/build/reports/tests/
-- [ ] T055 Run quickstart verification steps and update commands if needed in specs/001-core-database-entities/quickstart.md
-- [ ] T056 Final compliance review and gate checklist update in specs/001-core-database-entities/checklists/requirements.md
+- [X] T050 [P] Document migration and persistence architecture decisions in specs/001-core-database-entities/research.md
+- [X] T051 [P] Finalize entity relationship and constraint documentation in specs/001-core-database-entities/data-model.md
+- [X] T052 Add New Relic instrumentation hooks for persistence and async logging paths in backend/src/main/java/com/khaleo/flashcard/config/observability/NewRelicPersistenceInstrumentation.java
+- [X] T053 Add CloudWatch alarm Terraform definitions for persistence error-rate and retry/dead-letter failures in infra/terraform/cloudwatch-persistence-alarms.tf
+- [X] T054 Execute full backend test suite and record coverage output in backend/build/reports/tests/
+- [X] T055 Run quickstart verification steps and update commands if needed in specs/001-core-database-entities/quickstart.md
+- [X] T056 Final compliance review and gate checklist update in specs/001-core-database-entities/checklists/requirements.md
 
 ---
 

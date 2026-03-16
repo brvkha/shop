@@ -35,9 +35,16 @@ Run from repository root once backend project is initialized:
 
 ```bash
 cd backend
-./mvnw -q -DskipTests flyway:validate
-./mvnw -q test
+mvn -q -DskipTests flyway:validate
+mvn test
 ```
+
+If your environment lacks an available MySQL container connection, integration
+tests can fail during transaction bootstrap. In that case:
+
+1. Ensure Docker Desktop is running and reachable.
+2. Re-run `mvn test`.
+3. Capture verification output in `backend/build/reports/tests/`.
 
 ## 5. Verify Critical Behaviors
 

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
+@SuppressWarnings("null")
 class CardLearningStateUniquenessIT extends IntegrationPersistenceTestBase {
 
     @Autowired
@@ -60,6 +61,8 @@ class CardLearningStateUniquenessIT extends IntegrationPersistenceTestBase {
         service.upsertLearningState(new RelationalPersistenceService.UpsertLearningStateRequest(
                 user.getId(),
                 card.getId(),
+                null,
+                null,
                 null,
                 null,
                 null,

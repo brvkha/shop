@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
+@SuppressWarnings("null")
 class UserDeckCardPersistenceIT extends IntegrationPersistenceTestBase {
 
     @Autowired
@@ -35,7 +36,8 @@ class UserDeckCardPersistenceIT extends IntegrationPersistenceTestBase {
     void shouldPersistUserDeckAndCardWithValidRelationships() {
         User user = service.createUser(new RelationalPersistenceService.CreateUserRequest(
                 "learner@example.com",
-                "hashed-password"));
+                "hashed-password",
+                null));
 
         Deck deck = service.createDeck(user.getId(), new RelationalPersistenceService.CreateDeckRequest(
                 "Core Deck",

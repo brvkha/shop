@@ -9,6 +9,8 @@ CREATE TABLE users (
 	updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 	CONSTRAINT pk_users PRIMARY KEY (id),
 	CONSTRAINT uk_users_email UNIQUE (email),
+	CONSTRAINT ck_users_email_not_blank CHECK (TRIM(email) <> ''),
+	CONSTRAINT ck_users_email_normalized CHECK (email = LOWER(TRIM(email))),
 	CONSTRAINT ck_users_daily_learning_limit CHECK (daily_learning_limit BETWEEN 1 AND 9999)
 );
 
@@ -63,6 +65,7 @@ CREATE TABLE card_learning_states (
 	CONSTRAINT fk_learning_states_card FOREIGN KEY (card_id) REFERENCES cards (id),
 	CONSTRAINT fk_learning_states_user FOREIGN KEY (user_id) REFERENCES users (id),
 	CONSTRAINT ck_learning_states_state CHECK (state IN ('NEW', 'LEARNING', 'MASTERED', 'REVIEW')),
+	CONSTRAINT ck_learning_states_ease_factor_positive CHECK (ease_factor > 0),
 	CONSTRAINT ck_learning_states_interval_non_negative CHECK (interval_in_days >= 0)
 );
 

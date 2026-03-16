@@ -59,6 +59,11 @@ public class Card extends BaseAuditableEntity {
     @PrePersist
     @PreUpdate
     void validateSides() {
+        frontText = normalize(frontText);
+        frontMediaUrl = normalize(frontMediaUrl);
+        backText = normalize(backText);
+        backMediaUrl = normalize(backMediaUrl);
+
         boolean hasFrontContent = hasValue(frontText) || hasValue(frontMediaUrl);
         boolean hasBackContent = hasValue(backText) || hasValue(backMediaUrl);
 
@@ -70,5 +75,13 @@ public class Card extends BaseAuditableEntity {
 
     private boolean hasValue(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
