@@ -39,3 +39,18 @@
 - Decision: Use unit tests for validation logic, integration tests with real database containers for schema/constraints, and targeted concurrency tests for optimistic locking; include contract tests for migration and entity-schema compatibility.
 - Rationale: Matches constitutional quality gate and verifies behavior where failures are most likely.
 - Alternatives considered: Unit-only approach (rejected due to inability to validate real constraints); full E2E-only approach (rejected as slow and less diagnostic for data-layer defects).
+
+## Decision 9: New Relic instrumentation hook strategy
+- Decision: Add a dedicated instrumentation component that emits structured New Relic-compatible events for relational success/failure and async publish/dead-letter outcomes.
+- Rationale: Centralizes observability extension points without coupling persistence services to a vendor SDK in this phase.
+- Alternatives considered: Direct New Relic agent API calls from each service (rejected due to tight vendor coupling); no instrumentation adapter (rejected due to weak operational traceability).
+
+## Decision 10: CloudWatch alarm baseline for persistence reliability
+- Decision: Define Terraform-managed CloudWatch alarms for persistence write error rate and async retry/dead-letter spikes.
+- Rationale: Provides actionable reliability guardrails for data path regressions and async degradation.
+- Alternatives considered: Dashboard-only monitoring (rejected due to delayed incident response); manual alarm setup (rejected by IaC governance).
+
+## Phase 6 Verification Notes
+- Full test execution attempted in Phase 6 validation.
+- Integration tests currently fail in local run due MySQL connectivity/bootstrap constraints in the execution environment.
+- Coverage artifact recorded under `backend/build/reports/tests/phase6-test-and-coverage-summary.md` to preserve evidence and unblock governance traceability.

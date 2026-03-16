@@ -4,17 +4,19 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
 public abstract class IntegrationPersistenceTestBase {
 
-    @Container
     protected static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0.39")
             .withDatabaseName("khaleo_flashcard_test")
             .withUsername("khaleo")
             .withPassword("khaleo");
+
+    static {
+        if (!MYSQL.isRunning()) {
+            MYSQL.start();
+        }
+    }
 
     @DynamicPropertySource
     static void registerDatasourceProperties(DynamicPropertyRegistry registry) {

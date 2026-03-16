@@ -1,0 +1,137 @@
+package com.khaleo.flashcard.service.persistence;
+
+import com.khaleo.flashcard.service.persistence.PersistenceValidationException.PersistenceErrorCode;
+import java.util.Locale;
+import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class PersistenceValidationExceptionMapper {
+
+    public RuntimeException mapCreateUserFailure(RuntimeException ex, String email) {
+        String detail = extractDetail(ex);
+        String lowerDetail = detail.toLowerCase(Locale.ROOT);
+
+        if (containsAny(lowerDetail, "uk_users_email", "duplicate", "unique", "email")) {
+            return logged(
+                    PersistenceErrorCode.DUPLICATE_EMAIL,
+                    "Duplicate email address rejected: " + email,
+                    ex,
+                    "persistence_user_rejected_duplicate_email");
+        }
+
+        if (containsAny(lowerDetail, "daily_learning_limit", "between 1 and 9999", "ck_users_daily_learning_limit")) {
+            return logged(
+                    PersistenceErrorCode.INVALID_DAILY_LEARNING_LIMIT,
+                    "dailyLearningLimit must be between 1 and 9999.",
+                    ex,
+                    "persistence_user_rejected_invalid_daily_limit");
+        }
+
+        return logged(
+                PersistenceErrorCode.VALIDATION_REJECTED,
+                "User persistence rejected by validation rules.",
+                ex,
+                "persistence_user_rejected_validation");
+    }
+
+    public RuntimeException mapCreateCardFailure(RuntimeException ex, UUID deckId) {
+        String detail = extractDetail(ex).toLowerCase(Locale.ROOT);
+        if (containsAny(detail, "front and back must each contain", "ck_cards_front_content", "ck_cards_back_content")) {
+            return logged(
+                    PersistenceErrorCode.INVALID_CARD_CONTENT,
+                    "Card front and back must each contain text or media content.",
+                    ex,
+                    "persistence_card_rejected_content");
+        }
+
+        return logged(
+                PersistenceErrorCode.VALIDATION_REJECTED,
+                "Card persistence rejected by validation rules for deckId=" + deckId,
+                ex,
+                "persistence_card_rejected_validation");
+    }
+
+    public RuntimeException mapCreateDeckFailure(RuntimeException ex, UUID authorId) {
+        return logged(
+                PersistenceErrorCode.VALIDATION_REJECTED,
+                "Deck persistence rejected for authorId=" + authorId,
+                ex,
+                "persistence_deck_rejected_validation");
+    }
+
+    public RuntimeException mapLearningStateFailure(RuntimeException ex, UUID userId, UUID cardId) {
+        if (ex instanceof ObjectOptimisticLockingFailureException) {
+            return mapOptimisticLockFailure(ex, userId, cardId);
+        }
+
+        String detail = extractDetail(ex).toLowerCase(Locale.ROOT);
+        if (containsAny(detail, "uk_learning_state_user_card", "duplicate", "unique")) {
+            return logged(
+                    PersistenceErrorCode.VALIDATION_REJECTED,
+                    "Active learning state already exists for userId=" + userId + " and cardId=" + cardId,
+                    ex,
+                    "persistence_learning_state_rejected_unique");
+        }
+
+        return logged(
+                PersistenceErrorCode.VALIDATION_REJECTED,
+                "Learning-state persistence rejected for userId=" + userId + " and cardId=" + cardId,
+                ex,
+                "persistence_learning_state_rejected_validation");
+    }
+
+    public RuntimeException mapOptimisticLockFailure(Throwable ex, UUID userId, UUID cardId) {
+        return logged(
+                PersistenceErrorCode.OPTIMISTIC_LOCK_CONFLICT,
+                "Optimistic lock conflict for userId=" + userId + " and cardId=" + cardId,
+                ex,
+                "persistence_learning_state_rejected_optimistic_lock");
+    }
+
+    public RuntimeException missingRelationship(String relation, String key) {
+        return logged(
+                PersistenceErrorCode.MISSING_RELATIONSHIP,
+                "Missing required relationship: " + relation + " (" + key + ")",
+                null,
+                "persistence_rejected_missing_relationship");
+    }
+
+    private RuntimeException logged(
+            PersistenceErrorCode code,
+            String message,
+            Throwable cause,
+            String event) {
+
+        if (cause == null) {
+            log.warn("event={} code={} message={}", event, code, message);
+            return new PersistenceValidationException(code, message);
+        }
+
+        log.warn("event={} code={} message={} reason={}", event, code, message, cause.getMessage());
+        return new PersistenceValidationException(code, message, cause);
+    }
+
+    private String extractDetail(Throwable throwable) {
+        Throwable root = throwable;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root.getMessage() == null ? throwable.getMessage() : root.getMessage();
+    }
+
+    private boolean containsAny(String source, String... values) {
+        if (source == null) {
+            return false;
+        }
+        for (String value : values) {
+            if (source.contains(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

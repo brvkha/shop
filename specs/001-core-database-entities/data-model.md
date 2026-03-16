@@ -14,7 +14,7 @@
   - `createdAt` (TIMESTAMP, not null)
   - `updatedAt` (TIMESTAMP, not null)
 - Validation rules:
-  - Email must be unique and non-empty.
+  - Email must be unique, non-empty, trimmed, and lowercase-normalized.
   - `dailyLearningLimit` must be between 1 and 9999.
 - Relationships:
   - One-to-many with `Deck`.
@@ -72,10 +72,12 @@
 - Validation rules:
   - Exactly one active row per `(userId, cardId)` enforced by unique constraint.
   - Interval cannot be negative.
-  - `easeFactor` must stay above minimum SM-2 threshold enforced by domain logic.
+  - `easeFactor` must remain positive (`> 0`) and defaults to 2.5.
 - Relationships:
   - Many-to-one with `Card`.
   - Many-to-one with `User`.
+- Concurrency rule:
+  - Updates use optimistic locking with one bounded retry; persistent conflict is rejected deterministically.
 - State transitions:
   - `NEW -> LEARNING` on first study.
   - `LEARNING -> REVIEW` when interval scheduling begins.
@@ -108,3 +110,13 @@
 - DynamoDB log writes are asynchronous and best-effort with retry + dead-letter.
 - Failure to write activity log does not roll back successful Aurora transaction.
 - Observability events must correlate Aurora commit and DynamoDB publish attempts.
+
+## Deterministic Validation Outcomes
+
+- Persistence validation failures map to canonical error codes:
+  - `DUPLICATE_EMAIL`
+  - `INVALID_DAILY_LEARNING_LIMIT`
+  - `INVALID_CARD_CONTENT`
+  - `MISSING_RELATIONSHIP`
+  - `OPTIMISTIC_LOCK_CONFLICT`
+  - `VALIDATION_REJECTED`

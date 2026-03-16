@@ -13,12 +13,12 @@ services and future API layers.
 - Entity contract:
   - Primary keys are UUIDs for all relational entities.
   - All entities maintain `createdAt` and `updatedAt`.
-  - `User.email` is unique and non-null.
+  - `User.email` is unique, non-null, trimmed, and lowercase-normalized.
   - `User.dailyLearningLimit` default `9999`, allowed range `1..9999`.
   - `Card` requires content on both front and back sides (text or media on each).
   - `CardLearningState` supports states `NEW|LEARNING|MASTERED|REVIEW`.
   - Unique active state constraint on `(userId, cardId)`.
-  - `CardLearningState.version` participates in optimistic concurrency checks.
+  - `CardLearningState.version` participates in optimistic concurrency checks with at most one retry.
 
 ## NoSQL Contract (DynamoDB)
 
@@ -37,6 +37,18 @@ services and future API layers.
 - DynamoDB activity log writes are asynchronous and may lag Aurora commit.
 - Failed DynamoDB writes are retried and then dead-lettered if retries exhaust.
 - A failed DynamoDB write never invalidates a successful Aurora transaction.
+
+## Deterministic Validation Outcome Contract
+
+- Validation failures are mapped to deterministic persistence error codes:
+  - `DUPLICATE_EMAIL`
+  - `INVALID_DAILY_LEARNING_LIMIT`
+  - `INVALID_CARD_CONTENT`
+  - `MISSING_RELATIONSHIP`
+  - `OPTIMISTIC_LOCK_CONFLICT`
+  - `VALIDATION_REJECTED`
+- Missing `user`, `deck`, `card`, or required parent relationships are rejected before write attempts.
+- Optimistic lock conflicts on learning-state updates are retried once; if conflict persists, reject with `OPTIMISTIC_LOCK_CONFLICT`.
 
 ## Compatibility Expectations
 
