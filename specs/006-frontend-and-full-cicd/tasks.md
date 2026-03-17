@@ -14,7 +14,7 @@
 
 - [X] T001 [P] Create CI/CD variable mapping table from Terraform outputs in specs/006-frontend-and-full-cicd/quickstart.md (Owner: DevOps)
 - [X] T002 Replace access-key-based auth guidance with GitHub OIDC role assumption in specs/006-frontend-and-full-cicd/quickstart.md (Owner: DevOps)
-- [ ] T003 Add/update production environment variable contract for backend/frontend in .github/workflows/ci.yml (Owner: DevOps)
+- [X] T003 Add/update production environment variable contract for backend/frontend in .github/workflows/ci.yml (Owner: DevOps)
 - [ ] T004 [P] Confirm frontend environment sample and runtime contract in frontend/.env.example (Owner: Frontend)
 
 ---
@@ -30,7 +30,7 @@
 - Deploy workflows use OIDC role assumption and do not require AWS long-lived keys.
 - Partial deployment failures mark workflow failed without auto-rollback.
 
-- [ ] T005 [US3] Implement backend+frontend CI gate workflow with explicit quality stages in .github/workflows/ci.yml (depends on T003, Owner: DevOps)
+- [X] T005 [US3] Implement backend+frontend CI gate workflow with explicit quality stages in .github/workflows/ci.yml (depends on T003, Owner: DevOps)
 - [ ] T006 [US3] Enforce OIDC credential step and production environment approval in .github/workflows/deploy-backend.yml (depends on T002, T005, Owner: DevOps)
 - [ ] T007 [US3] Create frontend deploy workflow (build, S3 sync, CloudFront invalidation) in .github/workflows/deploy-frontend.yml (depends on T001, T002, T005, Owner: DevOps)
 - [ ] T008 [US3] Preserve immutable commit-SHA artifact handling and manual rollback dispatch inputs in .github/workflows/deploy-backend.yml (depends on T006, Owner: DevOps)
