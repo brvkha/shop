@@ -308,34 +308,38 @@ resource "aws_launch_template" "backend" {
     http_tokens   = "required"
   }
 
-  user_data = base64encode(<<-EOT
-    #!/bin/bash
-    set -euxo pipefail
-    dnf update -y
-    dnf install -y java-17-amazon-corretto awscli
-    mkdir -p /opt/khaleo/flashcard-backend
-    
-    # Tạo sẵn file service ngay khi EC2 boot lên
-    cat <<EOF > /etc/systemd/system/flashcard-backend.service
-    [Unit]
-    Description=KhaLeo Backend
-    After=network.target
+user_data = base64encode(<<-EOT
+#!/bin/bash
+set -euo pipefail
 
-    [Service]
-    Type=simple
-    WorkingDirectory=/opt/khaleo/flashcard-backend
-    EnvironmentFile=-/opt/khaleo/flashcard-backend/runtime-secrets.env
-    ExecStart=/usr/bin/java -jar /opt/khaleo/flashcard-backend/current.jar
-    Restart=always
-    RestartSec=5
-    SuccessExitStatus=143
+# Cài đặt Java 17 và AWS CLI
+dnf update -y
+dnf install -y java-17-amazon-corretto awscli
+mkdir -p /opt/khaleo/flashcard-backend
 
-    [Install]
-    WantedBy=multi-user.target
+# Tạo file service (KHÔNG ĐƯỢC THỤT LỀ Ở ĐÂY)
+cat <<EOF > /etc/systemd/system/flashcard-backend.service
+[Unit]
+Description=KhaLeo Backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/khaleo/flashcard-backend
+EnvironmentFile=-/opt/khaleo/flashcard-backend/runtime-secrets.env
+ExecStart=/usr/bin/java -jar /opt/khaleo/flashcard-backend/current.jar
+Restart=always
+RestartSec=5
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
 EOF
-    systemctl daemon-reload
-    systemctl enable flashcard-backend
-  EOT
+
+# Tải lại cấu hình và bật service chạy ngầm
+systemctl daemon-reload
+systemctl enable flashcard-backend
+EOT
   )
 
   tag_specifications {

@@ -52,7 +52,7 @@ jobs:
       JWT_SECRET_ID: ${{ vars.JWT_SECRET_ID }}
       SES_SECRET_ID: ${{ vars.SES_SECRET_ID }}
       RUNTIME_ENV_PATH: ${{ vars.RUNTIME_ENV_PATH }}
-      TARGET_JAR_PATH: /opt/khaleo/flashcard-backend/app.jar
+      TARGET_JAR_PATH: /opt/khaleo/flashcard-backend/current.jar
     steps:
       - name: Checkout
         uses: actions/checkout@v4
