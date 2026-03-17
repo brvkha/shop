@@ -71,11 +71,37 @@ Grant the IAM role assumed by GitHub Actions via OIDC these capabilities:
 5. Confirm backend deploy publishes commit-SHA jar and runs SSM rollout.
 6. Confirm application health endpoint returns success.
 
+### 7.1 Latest Validation Record
+
+Date: 2026-03-17  
+Feature branch: `006-frontend-and-full-cicd`
+
+| Check | Status | Evidence |
+|---|---|---|
+| Frontend unit/component tests | PASS | `npm run test` (vitest: 6 passed) |
+| Frontend production build | PASS | `npm run build` |
+| CI coverage gate configured | PASS | `.github/workflows/ci.yml` uses `npm run test:coverage` |
+| Backend deploy diagnostics and rollback hint | PASS | `.github/workflows/deploy-backend.yml` summary + rollback section |
+| Frontend deploy diagnostics and rollback hint | PASS | `.github/workflows/deploy-frontend.yml` failure summary + rollback hint |
+| End-to-end push-to-main workflow run | PENDING | Requires GitHub Actions run on `main` with `production` approval |
+
+Action pending before release:
+
+- Execute a real `push-to-main` dry run in GitHub Actions and attach run URLs to this section.
+
 ## 8. Rollback (By Commit SHA)
 
-- Re-run workflow dispatch with a previous known-good SHA for both frontend and backend.
-- Verify deployment and health checks.
-- Record rollback event in release notes.
+1. Select a known-good commit SHA from Git history.
+2. Trigger `Deploy Backend` via `workflow_dispatch` and set `artifactSha=<known-good-sha>`.
+3. Approve `production` environment gate when prompted.
+4. Trigger `Deploy Frontend` via `workflow_dispatch` with the same `artifactSha`.
+5. Verify backend health endpoint and static frontend content.
+6. Log rollback reason, SHA, and timestamp in release notes.
+
+Important:
+
+- Both deploy workflows must use the same SHA to keep backend/frontend versions consistent.
+- No automatic rollback is expected on partial failures; use manual rollback flow above.
 
 ## 9. Common Failure Cases
 

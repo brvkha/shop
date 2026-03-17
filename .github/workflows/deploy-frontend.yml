@@ -1,5 +1,8 @@
 name: Deploy Frontend
 
+run-name: >-
+  Deploy Frontend (${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }})
+
 on:
   workflow_run:
     workflows:
@@ -83,6 +86,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload static assets to S3
+        id: sync
         run: |
           set -euo pipefail
           aws s3 sync frontend/dist "s3://${FRONTEND_S3_BUCKET}" --delete
@@ -99,6 +103,7 @@ jobs:
           echo "invalidation_id=${INVALIDATION_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Publish deployment summary
+        if: success()
         run: |
           {
             echo "### Frontend Deployment Summary"
@@ -106,4 +111,16 @@ jobs:
             echo "- Bucket: ${FRONTEND_S3_BUCKET}"
             echo "- CloudFront Distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
             echo "- Invalidation ID: ${{ steps.invalidate.outputs.invalidation_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish failure diagnostics
+        if: failure()
+        run: |
+          {
+            echo "### Frontend Deployment Failure"
+            echo "- Commit: ${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }}"
+            echo "- Bucket: ${FRONTEND_S3_BUCKET}"
+            echo "- CloudFront Distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
+            echo "- Check S3 sync permissions and CloudFront invalidation permissions for AWS_ROLE_TO_ASSUME."
+            echo "- Manual rollback: rerun workflow_dispatch with a known-good artifactSha."
           } >> "$GITHUB_STEP_SUMMARY"

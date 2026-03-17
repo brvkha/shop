@@ -15,7 +15,7 @@
 - [X] T001 [P] Create CI/CD variable mapping table from Terraform outputs in specs/006-frontend-and-full-cicd/quickstart.md (Owner: DevOps)
 - [X] T002 Replace access-key-based auth guidance with GitHub OIDC role assumption in specs/006-frontend-and-full-cicd/quickstart.md (Owner: DevOps)
 - [X] T003 Add/update production environment variable contract for backend/frontend in .github/workflows/ci.yml (Owner: DevOps)
-- [ ] T004 [P] Confirm frontend environment sample and runtime contract in frontend/.env.example (Owner: Frontend)
+- [X] T004 [P] Confirm frontend environment sample and runtime contract in frontend/.env.example (Owner: Frontend)
 
 ---
 
@@ -33,10 +33,10 @@
 - [X] T005 [US3] Implement backend+frontend CI gate workflow with explicit quality stages in .github/workflows/ci.yml (depends on T003, Owner: DevOps)
 - [X] T006 [US3] Enforce OIDC credential step and production environment approval in .github/workflows/deploy-backend.yml (depends on T002, T005, Owner: DevOps)
 - [X] T007 [US3] Create frontend deploy workflow (build, S3 sync, CloudFront invalidation) in .github/workflows/deploy-frontend.yml (depends on T001, T002, T005, Owner: DevOps)
-- [ ] T008 [US3] Preserve immutable commit-SHA artifact handling and manual rollback dispatch inputs in .github/workflows/deploy-backend.yml (depends on T006, Owner: DevOps)
-- [ ] T009 [P] [US3] Add workflow failure summaries and per-target diagnostics in .github/workflows/deploy-backend.yml (depends on T006, Owner: DevOps)
-- [ ] T010 [P] [US3] Add workflow failure summaries and per-target diagnostics in .github/workflows/deploy-frontend.yml (depends on T007, Owner: DevOps)
-- [ ] T011 [US3] Update deploy scripts to consume Secrets Manager-backed runtime configuration in backend/scripts/deploy-via-ssm.sh (depends on T006, Owner: Backend)
+- [X] T008 [US3] Preserve immutable commit-SHA artifact handling and manual rollback dispatch inputs in .github/workflows/deploy-backend.yml (depends on T006, Owner: DevOps)
+- [X] T009 [P] [US3] Add workflow failure summaries and per-target diagnostics in .github/workflows/deploy-backend.yml (depends on T006, Owner: DevOps)
+- [X] T010 [P] [US3] Add workflow failure summaries and per-target diagnostics in .github/workflows/deploy-frontend.yml (depends on T007, Owner: DevOps)
+- [X] T011 [US3] Update deploy scripts to consume Secrets Manager-backed runtime configuration in backend/scripts/deploy-via-ssm.sh (depends on T006, Owner: Backend)
 
 ---
 
@@ -51,14 +51,14 @@
 - Deck/card CRUD and search are usable on mobile width >= 360px.
 - Presigned upload validates 5MB max before backend calls.
 
-- [ ] T012 [P] [US1] Implement auth pages and session bootstrap in frontend/src/features/auth/ (depends on T004, Owner: Frontend)
-- [ ] T013 [US1] Implement route guards and role-aware redirects in frontend/src/router/guards.tsx (depends on T012, Owner: Frontend)
-- [ ] T014 [P] [US1] Implement deck CRUD pages and query hooks in frontend/src/features/decks/ (depends on T012, Owner: Frontend)
-- [ ] T015 [P] [US1] Implement card CRUD pages and query hooks in frontend/src/features/cards/ (depends on T012, Owner: Frontend)
-- [ ] T016 [US1] Implement deck search and in-deck advanced card search in frontend/src/features/search/ (depends on T014, T015, Owner: Frontend)
-- [ ] T017 [US1] Implement S3 presigned media upload flow with 5MB validation in frontend/src/features/media/ (depends on T015, Owner: Frontend)
-- [ ] T018 [US1] Implement study session interaction flow (reveal/rate/progress) in frontend/src/features/study/ (depends on T014, T015, Owner: Frontend)
-- [ ] T019 [US1] Implement account profile and daily-learning-limit settings UI in frontend/src/features/profile/ (depends on T012, Owner: Frontend)
+- [X] T012 [P] [US1] Implement auth pages and session bootstrap in frontend/src/features/auth/ (depends on T004, Owner: Frontend)
+- [X] T013 [US1] Implement route guards and role-aware redirects in frontend/src/router/guards.tsx (depends on T012, Owner: Frontend)
+- [X] T014 [P] [US1] Implement deck CRUD pages and query hooks in frontend/src/features/decks/ (depends on T012, Owner: Frontend)
+- [X] T015 [P] [US1] Implement card CRUD pages and query hooks in frontend/src/features/cards/ (depends on T012, Owner: Frontend)
+- [X] T016 [US1] Implement deck search and in-deck advanced card search in frontend/src/features/search/ (depends on T014, T015, Owner: Frontend)
+- [X] T017 [US1] Implement S3 presigned media upload flow with 5MB validation in frontend/src/features/media/ (depends on T015, Owner: Frontend)
+- [X] T018 [US1] Implement study session interaction flow (reveal/rate/progress) in frontend/src/features/study/ (depends on T014, T015, Owner: Frontend)
+- [X] T019 [US1] Implement account profile and daily-learning-limit settings UI in frontend/src/features/profile/ (depends on T012, Owner: Frontend)
 
 ---
 
@@ -73,11 +73,11 @@
 - Ban and moderation actions surface clear confirmation and failure states.
 - Non-admin access attempts are safely rejected.
 
-- [ ] T020 [P] [US2] Implement admin dashboard stats screen in frontend/src/features/admin/dashboard/ (depends on T013, Owner: Frontend)
-- [ ] T021 [US2] Implement admin user moderation (ban/unban) in frontend/src/features/admin/users/ (depends on T020, Owner: Frontend)
-- [ ] T022 [US2] Implement admin deck moderation (delete any deck) in frontend/src/features/admin/decks/ (depends on T020, Owner: Frontend)
-- [ ] T023 [US2] Implement admin card moderation (edit any card) in frontend/src/features/admin/cards/ (depends on T020, Owner: Frontend)
-- [ ] T024 [US2] Add audit-friendly confirmation dialogs and error states for admin actions in frontend/src/features/admin/components/ (depends on T021, T022, T023, Owner: Frontend)
+- [X] T020 [P] [US2] Implement admin dashboard stats screen in frontend/src/features/admin/dashboard/ (depends on T013, Owner: Frontend)
+- [X] T021 [US2] Implement admin user moderation (ban/unban) in frontend/src/features/admin/users/ (depends on T020, Owner: Frontend)
+- [X] T022 [US2] Implement admin deck moderation (delete any deck) in frontend/src/features/admin/decks/ (depends on T020, Owner: Frontend)
+- [X] T023 [US2] Implement admin card moderation (edit any card) in frontend/src/features/admin/cards/ (depends on T020, Owner: Frontend)
+- [X] T024 [US2] Add audit-friendly confirmation dialogs and error states for admin actions in frontend/src/features/admin/components/ (depends on T021, T022, T023, Owner: Frontend)
 
 ---
 
@@ -90,12 +90,12 @@
 - CI output includes coverage and stage-level diagnostics.
 - End-to-end push-to-deploy dry run is repeatable.
 
-- [ ] T025 [P] Add frontend unit tests for auth hooks, guard logic, and state transitions in frontend/src/**/*.test.ts (depends on T013, Owner: Frontend)
-- [ ] T026 [P] Add frontend component/integration tests for deck/card/study journeys in frontend/src/**/*.test.tsx (depends on T018, Owner: Frontend)
-- [ ] T027 Add frontend E2E smoke tests for P1 flows in frontend/tests/e2e/ (depends on T019, Owner: Frontend)
-- [ ] T028 Add CI coverage publication and threshold enforcement in .github/workflows/ci.yml (depends on T005, T025, T026, Owner: DevOps)
-- [ ] T029 Add frontend-backend DTO contract drift checks in frontend/src/services/contracts/ (depends on T014, T015, T018, Owner: Frontend)
-- [ ] T030 Execute and record push-to-main deployment validation checklist in specs/006-frontend-and-full-cicd/quickstart.md (depends on T008, T010, T011, T027, Owner: DevOps)
+- [X] T025 [P] Add frontend unit tests for auth hooks, guard logic, and state transitions in frontend/src/**/*.test.ts (depends on T013, Owner: Frontend)
+- [X] T026 [P] Add frontend component/integration tests for deck/card/study journeys in frontend/src/**/*.test.tsx (depends on T018, Owner: Frontend)
+- [X] T027 Add frontend E2E smoke tests for P1 flows in frontend/tests/e2e/ (depends on T019, Owner: Frontend)
+- [X] T028 Add CI coverage publication and threshold enforcement in .github/workflows/ci.yml (depends on T005, T025, T026, Owner: DevOps)
+- [X] T029 Add frontend-backend DTO contract drift checks in frontend/src/services/contracts/ (depends on T014, T015, T018, Owner: Frontend)
+- [X] T030 Execute and record push-to-main deployment validation checklist in specs/006-frontend-and-full-cicd/quickstart.md (depends on T008, T010, T011, T027, Owner: DevOps)
 
 ---
 
@@ -108,10 +108,10 @@
 - Secret ownership and rotation responsibilities are explicit.
 - Feature docs reflect final architecture decisions and constraints.
 
-- [ ] T031 Update CI/CD runbook with OIDC role ARN, required env vars, and approval flow in KhaLeoDocs/cicd_runbook_and_iam_policies.md (depends on T006, T007, Owner: DevOps)
-- [ ] T032 Update frontend delivery and testing runbook in frontend/README.md (depends on T019, T027, Owner: Frontend)
-- [ ] T033 Update production rollback-by-SHA procedure in specs/006-frontend-and-full-cicd/quickstart.md (depends on T008, T030, Owner: DevOps)
-- [ ] T034 Add release readiness checklist for frontend + backend deployment in README.md (depends on T031, T032, T033, Owner: DevOps)
+- [X] T031 Update CI/CD runbook with OIDC role ARN, required env vars, and approval flow in KhaLeoDocs/cicd_runbook_and_iam_policies.md (depends on T006, T007, Owner: DevOps)
+- [X] T032 Update frontend delivery and testing runbook in frontend/README.md (depends on T019, T027, Owner: Frontend)
+- [X] T033 Update production rollback-by-SHA procedure in specs/006-frontend-and-full-cicd/quickstart.md (depends on T008, T030, Owner: DevOps)
+- [X] T034 Add release readiness checklist for frontend + backend deployment in README.md (depends on T031, T032, T033, Owner: DevOps)
 
 ---
 

@@ -1,5 +1,8 @@
 name: Deploy Backend
 
+run-name: >-
+  Deploy Backend (${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }})
+
 on:
   workflow_run:
     workflows:
@@ -9,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       artifactSha:
-        description: "Optional commit SHA to redeploy"
+        description: "Commit SHA to redeploy (leave empty to deploy current SHA)"
         required: false
 
 jobs:
@@ -155,3 +158,12 @@ jobs:
             echo "One or more deployment targets failed."
             exit 1
           fi
+
+      - name: Manual rollback reminder
+        if: failure()
+        run: |
+          {
+            echo "### Manual Rollback"
+            echo "- Re-run this workflow via workflow_dispatch with a known-good artifactSha."
+            echo "- Re-run Deploy Frontend with the same artifactSha for consistency."
+          } >> "$GITHUB_STEP_SUMMARY"
