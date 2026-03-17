@@ -5,4 +5,10 @@
 *.tfvars.json
 .terraform.lock.hcl
 crash.log
+crash.*.log
 *.tmp
+*.swp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
