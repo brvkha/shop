@@ -47,10 +47,18 @@ jobs:
       CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
     steps:
+      - name: Resolve deployment SHA
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }}"
+          echo "value=${SHA}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ steps.sha.outputs.value }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -107,10 +115,15 @@ jobs:
         run: |
           {
             echo "### Frontend Deployment Summary"
-            echo "- Commit: ${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }}"
+            echo "- Artifact SHA: ${{ steps.sha.outputs.value }}"
             echo "- Bucket: ${FRONTEND_S3_BUCKET}"
             echo "- CloudFront Distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
             echo "- Invalidation ID: ${{ steps.invalidate.outputs.invalidation_id }}"
+            echo "- Environment: production"
+            echo ""
+            echo "### Rollback Guidance"
+            echo "- Re-run Deploy Frontend via workflow_dispatch with artifactSha=<known-good-sha>."
+            echo "- Re-run Deploy Backend with the same artifactSha if backend/frontend versions diverge."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish failure diagnostics
@@ -118,9 +131,9 @@ jobs:
         run: |
           {
             echo "### Frontend Deployment Failure"
-            echo "- Commit: ${{ github.event.inputs.artifactSha || github.event.workflow_run.head_sha || github.sha }}"
+            echo "- Artifact SHA: ${{ steps.sha.outputs.value }}"
             echo "- Bucket: ${FRONTEND_S3_BUCKET}"
             echo "- CloudFront Distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
             echo "- Check S3 sync permissions and CloudFront invalidation permissions for AWS_ROLE_TO_ASSUME."
-            echo "- Manual rollback: rerun workflow_dispatch with a known-good artifactSha."
+            echo "- Manual rollback: rerun workflow_dispatch with artifactSha=<known-good-sha>."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,7 @@
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mFailed to read state file[0m
+[31m│[0m [0m
+[31m│[0m [0m[0mThe state file could not be read: read terraform.tfstate: The process
+[31m│[0m [0mcannot access the file because another process has locked a portion of the
+[31m│[0m [0mfile.
+[31m╵[0m[0m

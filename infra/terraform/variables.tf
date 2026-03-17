@@ -54,6 +54,54 @@ variable "deploy_service_name" {
   default     = "flashcard-backend"
 }
 
+variable "backend_base_url" {
+  description = "Public backend base URL exposed to frontend clients"
+  type        = string
+  default     = "https://api.khaleoshop.click"
+}
+
+variable "app_env" {
+  description = "Application environment label consumed by workflows"
+  type        = string
+  default     = "production"
+}
+
+variable "java_version" {
+  description = "Java version used by CI and deploy workflows"
+  type        = string
+  default     = "17"
+}
+
+variable "node_version" {
+  description = "Node.js version used by CI and deploy workflows"
+  type        = string
+  default     = "20"
+}
+
+variable "db_secret_name" {
+  description = "Secrets Manager secret name for database runtime credentials"
+  type        = string
+  default     = "khaleo/prod/db-credentials"
+}
+
+variable "jwt_secret_name" {
+  description = "Secrets Manager secret name for JWT signing secret"
+  type        = string
+  default     = "khaleo/prod/jwt-secret"
+}
+
+variable "ses_secret_name" {
+  description = "Secrets Manager secret name for SES runtime credentials"
+  type        = string
+  default     = "khaleo/prod/ses-credentials"
+}
+
+variable "runtime_env_path" {
+  description = "Path to the generated runtime properties file consumed by Spring Boot"
+  type        = string
+  default     = "/opt/khaleo/flashcard-backend/runtime-secrets.env"
+}
+
 variable "placeholder_secret_value" {
   description = "Placeholder value written to GitHub secrets; replace with real values after apply"
   type        = string
@@ -109,10 +157,112 @@ variable "deployment_command_failure_alarm_threshold" {
   default     = 1
 }
 
+variable "backend_http_5xx_alarm_threshold" {
+  description = "Threshold for backend HTTP 5xx alarms over 5 minutes"
+  type        = number
+  default     = 5
+}
+
 variable "deploy_artifact_bucket" {
   description = "S3 bucket storing immutable backend deployment artifacts"
   type        = string
   default     = "kha-leo-build-artifacts"
+}
+
+variable "root_domain_name" {
+  description = "Primary frontend domain"
+  type        = string
+  default     = "khaleoshop.click"
+}
+
+variable "api_subdomain" {
+  description = "API subdomain prefix"
+  type        = string
+  default     = "api"
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID for khaleoshop.click"
+  type        = string
+  default     = ""
+}
+
+variable "availability_zones" {
+  description = "Availability zones for multi-AZ deployment"
+  type        = list(string)
+  default     = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.42.0.0/16"
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public ALB/NAT subnets"
+  type        = list(string)
+  default     = ["10.42.0.0/24", "10.42.1.0/24", "10.42.2.0/24"]
+}
+
+variable "private_subnet_cidrs" {
+  description = "CIDR blocks for private backend subnets"
+  type        = list(string)
+  default     = ["10.42.10.0/24", "10.42.11.0/24", "10.42.12.0/24"]
+}
+
+variable "backend_instance_type" {
+  description = "EC2 instance type for backend ASG"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "backend_ami_id" {
+  description = "AMI ID for backend launch template"
+  type        = string
+  default     = "ami-0c02fb55956c7d316"
+}
+
+variable "backend_desired_capacity" {
+  description = "Desired instance count in backend ASG"
+  type        = number
+  default     = 3
+}
+
+variable "backend_min_size" {
+  description = "Minimum backend ASG size"
+  type        = number
+  default     = 3
+}
+
+variable "backend_max_size" {
+  description = "Maximum backend ASG size"
+  type        = number
+  default     = 6
+}
+
+variable "backend_health_check_path" {
+  description = "ALB target group health check path"
+  type        = string
+  default     = "/actuator/health"
+}
+
+variable "alb_certificate_arn" {
+  description = "ACM certificate ARN for backend HTTPS listener"
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_acm_certificate_arn" {
+  description = "ACM certificate ARN in us-east-1 for CloudFront custom domain"
+  type        = string
+  default     = ""
+}
+
+variable "waf_rate_limit" {
+  description = "Rate limit for WAF rate-based rule"
+  type        = number
+  default     = 2000
 }
 
 variable "common_tags" {

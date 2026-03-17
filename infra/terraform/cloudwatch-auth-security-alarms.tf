@@ -92,3 +92,41 @@ resource "aws_cloudwatch_metric_alarm" "admin_authorization_denials_high" {
 
   tags = var.common_tags
 }
+
+resource "aws_cloudwatch_metric_alarm" "backend_http_5xx_high" {
+  alarm_name          = "khaleo-backend-http-5xx-high"
+  alarm_description   = "Elevated backend HTTP 5xx errors"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = var.backend_http_5xx_alarm_threshold
+  metric_name         = "Http5xx"
+  namespace           = "KhaLeo/Backend"
+  period              = 300
+  statistic           = "Sum"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    Service = "flashcard-backend"
+  }
+
+  tags = var.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "deployment_workflow_failure_high" {
+  alarm_name          = "khaleo-deployment-workflow-failure-high"
+  alarm_description   = "Deployment workflow failure signals detected"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = var.deployment_command_failure_alarm_threshold
+  metric_name         = "DeploymentWorkflowFailure"
+  namespace           = "KhaLeo/Backend"
+  period              = 300
+  statistic           = "Sum"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    Service = "flashcard-backend"
+  }
+
+  tags = var.common_tags
+}

@@ -20,3 +20,40 @@ Before approving production release:
 - Frontend: `frontend/`
 - Terraform: `infra/terraform/`
 - Feature specs: `specs/`
+
+## Enterprise CI/CD Contract (Phase 1-2)
+
+- Terraform is the source of truth for AWS deploy contracts and GitHub production environment configuration.
+- CI (`.github/workflows/ci.yml`) runs Terraform format/validate/speculative plan plus backend/frontend quality gates.
+- Deploy workflows must assume AWS role via OIDC and use immutable artifact-by-SHA paths.
+- Runtime secrets are sourced from AWS Secrets Manager (`khaleo/prod/*`) and never committed.
+
+### Minimum Production Environment Values
+
+Secrets:
+
+- `AWS_ROLE_TO_ASSUME`
+- `AWS_REGION`
+- `ARTIFACT_BUCKET`
+- `FRONTEND_S3_BUCKET`
+- `CLOUDFRONT_DISTRIBUTION_ID`
+- `DEPLOY_TARGET_TAG_KEY`
+- `DEPLOY_TARGET_TAG_VALUE`
+- `DEPLOY_SERVICE_NAME`
+
+Variables:
+
+- `BACKEND_BASE_URL`
+- `APP_ENV`
+- `JAVA_VERSION`
+- `NODE_VERSION`
+- `DB_SECRET_ID`
+- `JWT_SECRET_ID`
+- `SES_SECRET_ID`
+- `RUNTIME_ENV_PATH`
+
+## Release Evidence And Runbooks
+
+- MVP validation evidence: `specs/feature/enterprise-aws-infra-cicd/mvp-validation.md`
+- Quickstart validation status: `specs/feature/enterprise-aws-infra-cicd/quickstart-validation.md`
+- Rollback runbook: `specs/feature/enterprise-aws-infra-cicd/quickstart.md#7-manual-rollback-by-sha`

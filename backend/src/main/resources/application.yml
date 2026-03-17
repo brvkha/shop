@@ -76,3 +76,16 @@ app:
     newrelic:
       agent-enabled: ${NEW_RELIC_AGENT_ENABLED:false}
       app-name: ${NEW_RELIC_APP_NAME:flashcard-backend}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+    import: optional:file:/opt/khaleo/flashcard-backend/runtime-secrets.env[.properties]
+
+app:
+  runtime-secrets:
+    db-secret-id: ${DB_SECRET_ID:khaleo/prod/db-credentials}
+    jwt-secret-id: ${JWT_SECRET_ID:khaleo/prod/jwt-secret}
+    ses-secret-id: ${SES_SECRET_ID:khaleo/prod/ses-credentials}

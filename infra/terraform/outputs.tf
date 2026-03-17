@@ -31,3 +31,23 @@ output "secrets_manager_secrets" {
     ses = aws_secretsmanager_secret.ses_credentials.arn
   }
 }
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for frontend"
+  value       = aws_cloudfront_distribution.frontend.id
+}
+
+output "cloudfront_distribution_domain_name" {
+  description = "CloudFront distribution domain name"
+  value       = aws_cloudfront_distribution.frontend.domain_name
+}
+
+output "backend_alb_dns_name" {
+  description = "Backend ALB DNS name"
+  value       = aws_lb.backend.dns_name
+}
+
+output "backend_target_group_arn" {
+  description = "Backend ALB target group ARN"
+  value       = aws_lb_target_group.backend.arn
+}

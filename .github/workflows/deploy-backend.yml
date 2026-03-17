@@ -32,7 +32,7 @@ jobs:
   deploy:
     needs: workflow-contract
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') ||
       (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main')
@@ -48,6 +48,10 @@ jobs:
       DEPLOY_TARGET_TAG_VALUE: ${{ secrets.DEPLOY_TARGET_TAG_VALUE }}
       SERVICE_NAME: ${{ secrets.DEPLOY_SERVICE_NAME }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      DB_SECRET_ID: ${{ vars.DB_SECRET_ID }}
+      JWT_SECRET_ID: ${{ vars.JWT_SECRET_ID }}
+      SES_SECRET_ID: ${{ vars.SES_SECRET_ID }}
+      RUNTIME_ENV_PATH: ${{ vars.RUNTIME_ENV_PATH }}
       TARGET_JAR_PATH: /opt/khaleo/flashcard-backend/app.jar
     steps:
       - name: Checkout
@@ -81,6 +85,18 @@ jobs:
           set -euo pipefail
           test -n "${AWS_ROLE_TO_ASSUME}"
           test -n "${AWS_REGION}"
+          test -n "${DB_SECRET_ID}"
+          test -n "${JWT_SECRET_ID}"
+          test -n "${SES_SECRET_ID}"
+          test -n "${RUNTIME_ENV_PATH}"
+
+      - name: Encode deploy script for SSM execution
+        id: deploy_script
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT_B64=$(base64 -w 0 backend/scripts/deploy-via-ssm.sh)
+          echo "content=${SCRIPT_B64}" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -104,12 +120,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TARGET_DIR=$(dirname "${TARGET_JAR_PATH}")
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --comment "KhaLeo backend deploy ${{ steps.sha.outputs.value }}" \
             --targets "Key=tag:${DEPLOY_TARGET_TAG_KEY},Values=${DEPLOY_TARGET_TAG_VALUE}" \
-            --parameters commands="sudo mkdir -p ${TARGET_DIR}","sudo aws s3 cp ${{ steps.upload.outputs.artifact_uri }} ${TARGET_JAR_PATH}","sudo systemctl daemon-reload","sudo systemctl restart ${SERVICE_NAME}","sudo systemctl is-active --quiet ${SERVICE_NAME}" \
+            --parameters commands="echo '${{ steps.deploy_script.outputs.content }}' | base64 -d | sudo tee /tmp/deploy-via-ssm.sh >/dev/null","sudo chmod +x /tmp/deploy-via-ssm.sh","sudo DB_SECRET_ID='${DB_SECRET_ID}' JWT_SECRET_ID='${JWT_SECRET_ID}' SES_SECRET_ID='${SES_SECRET_ID}' RUNTIME_ENV_PATH='${RUNTIME_ENV_PATH}' /tmp/deploy-via-ssm.sh '${{ steps.upload.outputs.artifact_uri }}' '${SERVICE_NAME}' '${TARGET_JAR_PATH}'" \
             --query "Command.CommandId" \
             --output text)
           echo "command_id=${COMMAND_ID}" >> "$GITHUB_OUTPUT"
@@ -147,10 +162,15 @@ jobs:
             echo "- SSM Command ID: ${COMMAND_ID}"
             echo "- Total targets: ${TOTAL_TARGETS}"
             echo "- Failed targets: ${FAILED_TARGETS}"
+            echo "- Environment: production"
             echo ""
             echo "\`\`\`"
             echo "${STATUS_TABLE}"
             echo "\`\`\`"
+            echo ""
+            echo "### Rollback Guidance"
+            echo "- Re-run this workflow via workflow_dispatch with artifactSha=<known-good-sha>."
+            echo "- Re-run Deploy Frontend with the same artifactSha to keep versions aligned."
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "failed_targets=${FAILED_TARGETS}" >> "$GITHUB_OUTPUT"
@@ -164,6 +184,6 @@ jobs:
         run: |
           {
             echo "### Manual Rollback"
-            echo "- Re-run this workflow via workflow_dispatch with a known-good artifactSha."
+            echo "- Re-run this workflow via workflow_dispatch with artifactSha=<known-good-sha>."
             echo "- Re-run Deploy Frontend with the same artifactSha for consistency."
           } >> "$GITHUB_STEP_SUMMARY"
