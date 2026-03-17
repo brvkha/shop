@@ -700,6 +700,7 @@ resource "aws_iam_policy" "github_actions_deploy" {
           "s3:GetBucket*",
           "s3:GetObject",
           "s3:GetAccelerateConfiguration",        # Bổ sung
+          "s3:GetLifecycleConfiguration",
           "wafv2:Get*",
           "wafv2:List*",
           "cloudfront:Get*",
