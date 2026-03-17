@@ -672,6 +672,48 @@ resource "aws_iam_policy" "github_actions_deploy" {
         ]
       },
       {
+        Sid    = "TerraformStateLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/khaleo-tf-state-lock"
+      }
+      ,
+      {
+        Sid    = "TerraformReadAll"
+        Effect = "Allow"
+        Action = [
+          "ec2:Describe*",
+          "elasticloadbalancing:Describe*",
+          "cloudwatch:Describe*",
+          "cloudwatch:Get*",
+          "cloudwatch:ListTagsForResource",       # Bổ sung
+          "logs:Describe*",
+          "logs:Get*",
+          "dynamodb:Describe*",
+          "dynamodb:GetItem",
+          "dynamodb:ListTagsOfResource",          # Bổ sung
+          "s3:GetBucket*",
+          "s3:GetObject",
+          "s3:GetAccelerateConfiguration",        # Bổ sung
+          "wafv2:Get*",
+          "wafv2:List*",
+          "cloudfront:Get*",
+          "cloudfront:List*",
+          "iam:Get*",
+          "iam:List*",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:GetResourcePolicy",     # Bổ sung
+          "autoscaling:DescribeAutoScalingGroups" # Bổ sung
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "Ec2DescribeForTargetResolution"
         Effect = "Allow"
         Action = [

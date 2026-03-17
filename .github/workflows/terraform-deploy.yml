@@ -44,7 +44,13 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -no-color -input=false
+        env:
+          # Thêm dòng này. Nếu token mặc định không đủ quyền ghi secret, 
+          # bạn sẽ cần tạo một Personal Access Token (PAT) và dùng ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve -input=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
