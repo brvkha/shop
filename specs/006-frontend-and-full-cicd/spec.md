@@ -2,7 +2,7 @@
 
 **Feature Branch**: `006-frontend-and-full-cicd`  
 **Created**: 2026-03-16  
-**Status**: Draft  
+**Status**: Ready for Planning  
 **Input**: Project constitution and the existing five backend/infra specifications.
 
 ## Goal
@@ -11,6 +11,15 @@ Complete the product by delivering:
 
 1. A production-ready React + Tailwind frontend for Guest, User, and Admin flows.
 2. End-to-end CI/CD so a push to `main` automatically builds, tests, and deploys both frontend and backend with environment-safe controls.
+
+## Clarifications
+
+### Session 2026-03-17
+
+- Q: Which AWS authentication model should CI/CD use? -> A: Use GitHub Actions OIDC with an AWS IAM role (no long-lived access keys).
+- Q: Should production deploy run automatically after push or require approval? -> A: Run CI automatically and require manual approval before production deploy.
+- Q: Where should runtime secrets be stored and retrieved from? -> A: Use AWS Secrets Manager for runtime secrets.
+ - Q: On deployment failure, should the pipeline auto-rollback or require manual rollback? -> A: Do not auto-rollback; mark run failed and require manual rollback.
 
 ## User Scenarios & Testing
 
@@ -72,6 +81,12 @@ As a release owner, I can push to `main` and have frontend and backend automatic
 - **FR-009**: Frontend deployment MUST publish static artifacts to S3 and invalidate CloudFront cache.
 - **FR-010**: CI/CD MUST support environment-specific configuration using GitHub Environments and encrypted secrets.
 - **FR-011**: CI/CD MUST expose actionable failure summaries in workflow outputs.
+- **FR-012**: CI/CD MUST authenticate to AWS using GitHub Actions OIDC with short-lived role assumption and no long-lived AWS access keys.
+ - **FR-013**: Runtime secrets and instance-level secrets SHOULD be stored in AWS Secrets Manager and retrieved by deployed instances via IAM role.
+ - **FR-014**: CI/CD MUST not perform automatic rollbacks on partial deployment failures; runs should be marked failed and require manual rollback via documented procedures.
+ - **FR-015**: Deployments to production MUST require GitHub Environment approval after CI success.
+
+Note: Production runtime secrets (DB credentials, JWT_SECRET, SES credentials) should be provisioned into AWS Secrets Manager and referenced by workflows and instances; deployment workflows should use short-lived role assumption via OIDC.
 
 ### Non-Functional Requirements
 
@@ -85,8 +100,7 @@ As a release owner, I can push to `main` and have frontend and backend automatic
 
 ### GitHub Repository Secrets (minimum)
 
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+- `AWS_ROLE_TO_ASSUME`
 - `AWS_REGION`
 - `ARTIFACT_BUCKET`
 - `DEPLOY_TARGET_TAG_KEY`
