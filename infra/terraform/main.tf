@@ -617,6 +617,21 @@ resource "aws_iam_policy" "github_actions_deploy" {
         ]
       },
       {
+        Sid    = "TerraformStateAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::khaleo-tf-state-backend",
+          "arn:aws:s3:::khaleo-tf-state-backend/*"
+        ]
+      }
+      ,
+      {
         Sid    = "S3FrontendBucketDeploy"
         Effect = "Allow"
         Action = [

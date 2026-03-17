@@ -5,17 +5,18 @@ on:
     branches:
       - main
     paths:
-      - 'infra/terraform/**' # Chỉ kích hoạt workflow khi có code Terraform thay đổi
+      - 'infra/terraform/**'
 
 permissions:
-  id-token: write # Bắt buộc phải có để lấy token OIDC đăng nhập AWS
+  id-token: write
   contents: read
 
 jobs:
   terraform:
-    environment: production
     name: "Terraform Plan & Apply"
     runs-on: ubuntu-latest
+    environment: production
+
     defaults:
       run:
         working-directory: ./infra/terraform
@@ -36,13 +37,14 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
-      # Bước này giúp kiểm tra xem code lỗi hay không trước khi chạy thật
+      - name: Terraform Validate
+        run: terraform validate
+
       - name: Terraform Plan
-        run: terraform plan -no-color
+        run: terraform plan -no-color -input=false
 
-      # Chỉ chạy apply tự động khi code được push/merge vào nhánh main
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -input=false
