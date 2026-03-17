@@ -715,6 +715,23 @@ resource "aws_iam_policy" "github_actions_deploy" {
         Resource = "*"
       },
       {
+        "Effect": "Allow",
+        "Action": [
+          "s3:*",
+          "dynamodb:*",
+          "cloudwatch:*",
+          "logs:*",
+          "ec2:*",
+          "autoscaling:*",
+          "elasticloadbalancing:*",
+          "secretsmanager:*",
+          "iam:PassRole",
+          "iam:Get*",
+          "iam:List*"
+        ],
+        "Resource": "*"
+      },
+      {
         Sid    = "Ec2DescribeForTargetResolution"
         Effect = "Allow"
         Action = [
