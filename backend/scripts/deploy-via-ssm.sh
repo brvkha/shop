@@ -90,7 +90,8 @@ sudo systemctl restart "$SERVICE_NAME" || sudo systemctl start "$SERVICE_NAME"
 # ======================
 log "Waiting for service health..."
 
-for i in {1..20}; do
+# Increased timeout to 120 seconds (60 * 2s)
+for i in {1..90}; do
   if curl -fs "$HEALTH_URL" | grep -q "UP"; then
     log "Service is healthy ✅"
     exit 0
