@@ -8,6 +8,27 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "Missing command: $1"
 }
 
+ensure_java_runtime() {
+  if command -v java >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Java runtime not found. Installing OpenJDK 17..."
+
+  if command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y java-17-amazon-corretto-headless || sudo dnf install -y java-17-openjdk-headless
+  elif command -v yum >/dev/null 2>&1; then
+    sudo yum install -y java-17-amazon-corretto-headless || sudo yum install -y java-17-openjdk-headless
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update -y
+    sudo apt-get install -y openjdk-17-jre-headless
+  else
+    fail "No supported package manager found to install Java"
+  fi
+
+  command -v java >/dev/null 2>&1 || fail "Java installation failed"
+}
+
 ARTIFACT_URI="${1:-}"
 SERVICE_NAME_RAW="${2:-flashcard-backend}"
 # Accept either "name" or "name.service" and normalize to a single unit name.
@@ -26,9 +47,9 @@ DB_SECRET_ID="${DB_SECRET_ID:-}"
 [[ "$ARTIFACT_URI" == s3://* ]] || fail "Artifact must be s3://"
 
 require_command aws
-require_command java
 require_command systemctl
 require_command curl
+ensure_java_runtime
 
 select_python() {
   if command -v python3 >/dev/null 2>&1; then
