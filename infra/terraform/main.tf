@@ -306,6 +306,76 @@ resource "aws_security_group" "backend" {
   tags = var.common_tags
 }
 
+resource "aws_security_group" "aurora" {
+  name        = "khaleo-aurora-sg"
+  description = "Security group for Aurora MySQL"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "MySQL traffic from backend instances"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.backend.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = var.common_tags
+}
+
+resource "aws_db_subnet_group" "aurora" {
+  name       = "khaleo-aurora-subnets"
+  subnet_ids = [for subnet in aws_subnet.private : subnet.id]
+
+  tags = merge(var.common_tags, {
+    Name = "khaleo-aurora-subnets"
+  })
+}
+
+resource "random_password" "aurora_master" {
+  length           = 24
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+resource "aws_rds_cluster" "aurora" {
+  cluster_identifier                  = var.aurora_cluster_identifier
+  engine                              = "aurora-mysql"
+  engine_version                      = var.aurora_engine_version
+  database_name                       = var.aurora_database_name
+  master_username                     = var.aurora_master_username
+  master_password                     = random_password.aurora_master.result
+  db_subnet_group_name                = aws_db_subnet_group.aurora.name
+  vpc_security_group_ids              = [aws_security_group.aurora.id]
+  backup_retention_period             = var.aurora_backup_retention_period
+  preferred_backup_window             = var.aurora_preferred_backup_window
+  preferred_maintenance_window        = var.aurora_preferred_maintenance_window
+  storage_encrypted                   = true
+  deletion_protection                 = var.aurora_deletion_protection
+  skip_final_snapshot                 = var.aurora_skip_final_snapshot
+  copy_tags_to_snapshot               = true
+  iam_database_authentication_enabled = false
+
+  tags = var.common_tags
+}
+
+resource "aws_rds_cluster_instance" "aurora" {
+  count              = var.aurora_instance_count
+  identifier         = "${var.aurora_cluster_identifier}-${count.index + 1}"
+  cluster_identifier = aws_rds_cluster.aurora.id
+  instance_class     = var.aurora_instance_class
+  engine             = aws_rds_cluster.aurora.engine
+  engine_version     = aws_rds_cluster.aurora.engine_version
+
+  tags = var.common_tags
+}
+
 resource "aws_lb" "backend" {
   name               = "khaleo-backend-alb"
   internal           = false
@@ -382,13 +452,13 @@ resource "aws_launch_template" "backend" {
     http_tokens   = "required"
   }
 
-user_data = base64encode(<<-EOT
+  user_data = base64encode(<<-EOT
 #!/bin/bash
 set -euo pipefail
 
 # Cài đặt Java 17 và AWS CLI
 dnf update -y
-dnf install -y java-17-amazon-corretto awscli
+dnf install -y java-17-amazon-corretto awscli python3
 mkdir -p /opt/khaleo/flashcard-backend
 
 # Tạo file service (KHÔNG ĐƯỢC THỤT LỀ Ở ĐÂY)
@@ -521,7 +591,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  aliases = [var.root_domain_name]
+  aliases             = [var.root_domain_name]
 
   origin {
     domain_name              = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
@@ -765,15 +835,15 @@ resource "aws_iam_policy" "github_actions_deploy" {
           "elasticloadbalancing:Describe*",
           "cloudwatch:Describe*",
           "cloudwatch:Get*",
-          "cloudwatch:ListTagsForResource",       # Bổ sung
+          "cloudwatch:ListTagsForResource", # Bổ sung
           "logs:Describe*",
           "logs:Get*",
           "dynamodb:Describe*",
           "dynamodb:GetItem",
-          "dynamodb:ListTagsOfResource",          # Bổ sung
+          "dynamodb:ListTagsOfResource", # Bổ sung
           "s3:GetBucket*",
           "s3:GetObject",
-          "s3:GetAccelerateConfiguration",        # Bổ sung
+          "s3:GetAccelerateConfiguration", # Bổ sung
           "s3:GetLifecycleConfiguration",
           "wafv2:Get*",
           "wafv2:List*",
@@ -789,8 +859,8 @@ resource "aws_iam_policy" "github_actions_deploy" {
         Resource = "*"
       },
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "s3:*",
           "dynamodb:*",
           "cloudwatch:*",
@@ -803,7 +873,7 @@ resource "aws_iam_policy" "github_actions_deploy" {
           "iam:Get*",
           "iam:List*"
         ],
-        "Resource": "*"
+        "Resource" : "*"
       },
       {
         Sid    = "Ec2DescribeForTargetResolution"
@@ -875,6 +945,19 @@ resource "aws_iam_instance_profile" "backend_runtime" {
 # Create Secrets Manager placeholders for runtime secrets (no secret string supplied)
 resource "aws_secretsmanager_secret" "db_credentials" {
   name = var.db_secret_name
+}
+
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    engine   = "mysql"
+    host     = aws_rds_cluster.aurora.endpoint
+    port     = 3306
+    dbname   = var.aurora_database_name
+    username = var.aurora_master_username
+    password = random_password.aurora_master.result
+    jdbc_url = "jdbc:mysql://${aws_rds_cluster.aurora.endpoint}:3306/${var.aurora_database_name}?useSSL=true&requireSSL=true&verifyServerCertificate=true"
+  })
 }
 
 resource "aws_secretsmanager_secret" "jwt_secret" {

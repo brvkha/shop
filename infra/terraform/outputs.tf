@@ -51,3 +51,18 @@ output "backend_target_group_arn" {
   description = "Backend ALB target group ARN"
   value       = aws_lb_target_group.backend.arn
 }
+
+output "aurora_cluster_endpoint" {
+  description = "Aurora MySQL writer endpoint"
+  value       = aws_rds_cluster.aurora.endpoint
+}
+
+output "aurora_cluster_reader_endpoint" {
+  description = "Aurora MySQL reader endpoint"
+  value       = aws_rds_cluster.aurora.reader_endpoint
+}
+
+output "aurora_cluster_identifier" {
+  description = "Aurora MySQL cluster identifier"
+  value       = aws_rds_cluster.aurora.cluster_identifier
+}

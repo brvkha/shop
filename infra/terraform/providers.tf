@@ -3,7 +3,7 @@ terraform {
     bucket         = "khaleo-tf-state-backend"
     key            = "flashcard-app/terraform.tfstate"
     region         = "ap-southeast-1"
-    dynamodb_table = "khaleo-tf-state-lock"
+    use_lockfile   = true
     encrypt        = true
   }
   required_version = ">= 1.2.0"
@@ -15,6 +15,10 @@ terraform {
     github = {
       source  = "integrations/github"
       version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
     }
   }
 }

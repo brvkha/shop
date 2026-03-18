@@ -105,6 +105,29 @@ jobs:
           role-session-name: gha-khaleo-backend-deploy
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Fail fast if DB secret resolves to localhost
+        shell: bash
+        run: |
+          set -euo pipefail
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "${DB_SECRET_ID}" \
+            --query SecretString \
+            --output text)
+
+          DB_URL=$(jq -r '(.jdbc_url // .jdbcUrl // .url // (if ((.host // .hostname // .endpoint) and (.dbname // .dbName // .database // .database_name)) then "jdbc:mysql://\(.host // .hostname // .endpoint):\((.port // 3306)|tostring)/\(.dbname // .dbName // .database // .database_name)?useSSL=true&requireSSL=true&verifyServerCertificate=true" else "" end))' <<< "$SECRET_JSON")
+
+          if [[ -z "${DB_URL}" ]]; then
+            echo "DB secret did not resolve to a JDBC URL." >&2
+            exit 1
+          fi
+
+          if [[ "${DB_URL}" == *"localhost"* || "${DB_URL}" == *"127.0.0.1"* ]]; then
+            echo "DB_URL points to localhost. Refusing to deploy." >&2
+            exit 1
+          fi
+
+          echo "Validated DB_URL from secret: ${DB_URL}"
+
       - name: Upload immutable artifact to S3
         id: upload
         shell: bash

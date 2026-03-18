@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           grep -q "workflow_run:" .github/workflows/deploy-frontend.yml
           grep -q "aws s3 sync" .github/workflows/deploy-frontend.yml
-          grep -q "CreateInvalidation" .github/workflows/deploy-frontend.yml
+          grep -q "create-invalidation" .github/workflows/deploy-frontend.yml
 
   deploy:
     needs: workflow-contract

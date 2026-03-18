@@ -145,6 +145,66 @@ variable "aurora_cluster_identifier" {
   default     = "khaleo-aurora-cluster"
 }
 
+variable "aurora_database_name" {
+  description = "Default database name created in Aurora MySQL cluster"
+  type        = string
+  default     = "khaleo_flashcard"
+}
+
+variable "aurora_master_username" {
+  description = "Aurora MySQL master username"
+  type        = string
+  default     = "khaleo_admin"
+}
+
+variable "aurora_engine_version" {
+  description = "Aurora MySQL engine version"
+  type        = string
+  default     = "8.0.mysql_aurora.3.08.0"
+}
+
+variable "aurora_instance_class" {
+  description = "Aurora instance class for writer/readers"
+  type        = string
+  default     = "db.t4g.medium"
+}
+
+variable "aurora_instance_count" {
+  description = "Number of Aurora instances to create in the cluster"
+  type        = number
+  default     = 1
+}
+
+variable "aurora_backup_retention_period" {
+  description = "Aurora automated backup retention in days"
+  type        = number
+  default     = 7
+}
+
+variable "aurora_preferred_backup_window" {
+  description = "Preferred backup window for Aurora cluster"
+  type        = string
+  default     = "17:00-18:00"
+}
+
+variable "aurora_preferred_maintenance_window" {
+  description = "Preferred maintenance window for Aurora cluster"
+  type        = string
+  default     = "sun:18:00-sun:19:00"
+}
+
+variable "aurora_deletion_protection" {
+  description = "Enable deletion protection for Aurora cluster"
+  type        = bool
+  default     = false
+}
+
+variable "aurora_skip_final_snapshot" {
+  description = "Skip final snapshot when destroying Aurora cluster"
+  type        = bool
+  default     = true
+}
+
 variable "admin_authorization_denials_alarm_threshold" {
   description = "Threshold for admin authorization denial alarms over 5 minutes"
   type        = number
