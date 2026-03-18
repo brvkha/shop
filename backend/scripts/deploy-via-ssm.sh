@@ -9,7 +9,10 @@ require_command() {
 }
 
 ARTIFACT_URI="${1:-}"
-SERVICE_NAME="${2:-flashcard-backend}"
+SERVICE_NAME_RAW="${2:-flashcard-backend}"
+# Accept either "name" or "name.service" and normalize to a single unit name.
+SERVICE_BASENAME="${SERVICE_NAME_RAW%.service}"
+SERVICE_NAME="${SERVICE_BASENAME}.service"
 TARGET_JAR_PATH="${3:-/opt/khaleo/flashcard-backend/current.jar}"
 BASE_DIR="$(dirname "$TARGET_JAR_PATH")"
 CURRENT_JAR="$TARGET_JAR_PATH"
@@ -144,7 +147,7 @@ write_runtime_env
 # ======================
 # 4. ENSURE SERVICE
 # ======================
-UNIT_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+UNIT_FILE="/etc/systemd/system/${SERVICE_NAME}"
 
 if ! sudo test -f "$UNIT_FILE"; then
   log "Creating systemd service..."
@@ -175,6 +178,7 @@ fi
 # 5. RESTART SERVICE
 # ======================
 log "Restarting service..."
+sudo systemctl daemon-reload
 sudo systemctl restart "$SERVICE_NAME" || sudo systemctl start "$SERVICE_NAME"
 
 # ======================
