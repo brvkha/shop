@@ -37,6 +37,7 @@ jobs:
       ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
       DEPLOY_TARGET_TAG_KEY: ${{ secrets.DEPLOY_TARGET_TAG_KEY }}
       DEPLOY_TARGET_TAG_VALUE: ${{ secrets.DEPLOY_TARGET_TAG_VALUE }}
+      DEPLOY_TARGET_GROUP_NAME: ${{ vars.DEPLOY_TARGET_GROUP_NAME || 'khaleo-backend-tg' }}
       SERVICE_NAME: ${{ secrets.DEPLOY_SERVICE_NAME }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       DB_SECRET_ID: ${{ vars.DB_SECRET_ID }}
@@ -129,6 +130,35 @@ jobs:
           echo "artifact_key=${ARTIFACT_KEY}" >> "$GITHUB_OUTPUT"
           echo "artifact_uri=s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve deployment targets from target group
+        id: targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          TG_ARN=$(aws elbv2 describe-target-groups \
+            --names "${DEPLOY_TARGET_GROUP_NAME}" \
+            --query "TargetGroups[0].TargetGroupArn" \
+            --output text)
+
+          if [[ -z "${TG_ARN}" || "${TG_ARN}" == "None" ]]; then
+            echo "Unable to resolve target group ARN for ${DEPLOY_TARGET_GROUP_NAME}." >&2
+            exit 1
+          fi
+
+          INSTANCE_IDS=$(aws elbv2 describe-target-health \
+            --target-group-arn "${TG_ARN}" \
+            --query "TargetHealthDescriptions[].Target.Id" \
+            --output text)
+
+          if [[ -z "${INSTANCE_IDS}" ]]; then
+            echo "No instances found in target group ${DEPLOY_TARGET_GROUP_NAME}." >&2
+            exit 1
+          fi
+
+          echo "target_group_arn=${TG_ARN}" >> "$GITHUB_OUTPUT"
+          echo "instance_ids=${INSTANCE_IDS}" >> "$GITHUB_OUTPUT"
+          echo "Resolved target group ${DEPLOY_TARGET_GROUP_NAME} instances: ${INSTANCE_IDS}"
+
       - name: Dispatch deployment command to all targets
         id: dispatch
         shell: bash
@@ -154,7 +184,7 @@ jobs:
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --comment "KhaLeo backend deploy ${{ steps.sha.outputs.value }}" \
-            --targets "Key=tag:${DEPLOY_TARGET_TAG_KEY},Values=${DEPLOY_TARGET_TAG_VALUE}" \
+            --instance-ids ${{ steps.targets.outputs.instance_ids }} \
             --parameters "$PARAMS" \
             --query "Command.CommandId" \
             --output text)
@@ -192,6 +222,9 @@ jobs:
             echo "- Artifact SHA: ${{ steps.sha.outputs.value }}"
             echo "- Artifact URI: ${{ steps.upload.outputs.artifact_uri }}"
             echo "- SSM Command ID: ${COMMAND_ID}"
+            echo "- Target group: ${DEPLOY_TARGET_GROUP_NAME}"
+            echo "- Target group ARN: ${{ steps.targets.outputs.target_group_arn }}"
+            echo "- Target instances: ${{ steps.targets.outputs.instance_ids }}"
             echo "- Total targets: ${TOTAL_TARGETS}"
             echo "- Failed targets: ${FAILED_TARGETS}"
             echo "- Environment: production"
