@@ -9,6 +9,10 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+
 env:
   JAVA_VERSION: ${{ vars.JAVA_VERSION || '17' }}
   NODE_VERSION: ${{ vars.NODE_VERSION || '20' }}
@@ -28,12 +32,10 @@ jobs:
         run: |
           set -euo pipefail
           grep -q "environment: production" .github/workflows/deploy-backend.yml
-          grep -q "github.event.workflow_run.head_branch == 'main'" .github/workflows/deploy-backend.yml
           grep -q "failed_targets" .github/workflows/deploy-backend.yml
           grep -q "workflow_dispatch" .github/workflows/deploy-backend.yml
 
           grep -q "environment: production" .github/workflows/deploy-frontend.yml
-          grep -q "github.event.workflow_run.head_branch == 'main'" .github/workflows/deploy-frontend.yml
           grep -q "create-invalidation" .github/workflows/deploy-frontend.yml
           grep -q "workflow_dispatch" .github/workflows/deploy-frontend.yml
 
@@ -184,3 +186,41 @@ jobs:
       - name: Fail if any required job failed
         if: needs.workflow-smoke-contract.result != 'success' || needs.terraform.result != 'success' || needs.backend.result != 'success' || needs.frontend.result != 'success'
         run: exit 1
+
+  trigger-deploy:
+    name: Trigger Backend and Frontend Deploy
+    runs-on: ubuntu-latest
+    needs:
+      - ci-summary
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.ci-summary.result == 'success'
+    steps:
+      - name: Dispatch deploy workflows
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactSha = context.sha;
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-backend.yml',
+              ref: 'main',
+              inputs: { artifactSha }
+            });
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-frontend.yml',
+              ref: 'main',
+              inputs: { artifactSha }
+            });
+
+      - name: Publish dispatch summary
+        run: |
+          {
+            echo "### Deployment Dispatch"
+            echo "- Trigger mode: CI auto-dispatch"
+            echo "- Branch: ${GITHUB_REF}"
+            echo "- Artifact SHA: ${GITHUB_SHA}"
+            echo "- Workflows dispatched: deploy-backend.yml, deploy-frontend.yml"
+          } >> "$GITHUB_STEP_SUMMARY"
