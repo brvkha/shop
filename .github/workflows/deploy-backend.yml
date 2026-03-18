@@ -265,13 +265,110 @@ jobs:
             exit 1
           fi
 
+      - name: Deploy to newly registered target-group instances
+        id: deploy_additional_targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          TG_ARN="${{ steps.targets.outputs.target_group_arn }}"
+          INITIAL_INSTANCE_IDS="${{ steps.targets.outputs.instance_ids }}"
+
+          mapfile -t INITIAL_ARR < <(tr '\t' '\n' <<< "${INITIAL_INSTANCE_IDS}" | sed '/^$/d')
+
+          CURRENT_INSTANCE_IDS=$(aws elbv2 describe-target-health \
+            --target-group-arn "${TG_ARN}" \
+            --query "TargetHealthDescriptions[].Target.Id" \
+            --output text)
+
+          contains_initial() {
+            local candidate="$1"
+            for existing in "${INITIAL_ARR[@]}"; do
+              if [[ "${existing}" == "${candidate}" ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          ADDITIONAL_INSTANCE_IDS=""
+          for INSTANCE_ID in ${CURRENT_INSTANCE_IDS}; do
+            if ! contains_initial "${INSTANCE_ID}"; then
+              ADDITIONAL_INSTANCE_IDS+=" ${INSTANCE_ID}"
+            fi
+          done
+          ADDITIONAL_INSTANCE_IDS="$(xargs <<< "${ADDITIONAL_INSTANCE_IDS}")"
+
+          if [[ -z "${ADDITIONAL_INSTANCE_IDS}" ]]; then
+            echo "No new target-group instances detected after primary deploy."
+            echo "additional_instance_ids=" >> "$GITHUB_OUTPUT"
+            echo "all_instance_ids=${INITIAL_INSTANCE_IDS}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Detected new target-group instances requiring deploy: ${ADDITIONAL_INSTANCE_IDS}"
+
+          PARAMS=$(jq -n \
+            --arg script "${{ steps.deploy_script.outputs.content }}" \
+            --arg db "${DB_SECRET_ID}" \
+            --arg jwt "${JWT_SECRET_ID}" \
+            --arg ses "${SES_SECRET_ID}" \
+            --arg env_path "${RUNTIME_ENV_PATH}" \
+            --arg artifact "${{ steps.upload.outputs.artifact_uri }}" \
+            --arg service "${SERVICE_NAME}" \
+            --arg jar "${TARGET_JAR_PATH}" \
+            '{
+              commands: [
+                "echo \($script) | base64 -d | sudo tee /tmp/deploy-via-ssm.sh >/dev/null",
+                "sudo chmod +x /tmp/deploy-via-ssm.sh",
+                "sudo sed -i '\''s/\\r$//'\'' /tmp/deploy-via-ssm.sh",
+                "sudo DB_SECRET_ID=\($db) JWT_SECRET_ID=\($jwt) SES_SECRET_ID=\($ses) RUNTIME_ENV_PATH=\($env_path) /tmp/deploy-via-ssm.sh \($artifact) \($service) \($jar)"
+              ]
+            }')
+
+          ADDITIONAL_COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --comment "KhaLeo backend deploy additional targets ${{ steps.sha.outputs.value }}" \
+            --instance-ids ${ADDITIONAL_INSTANCE_IDS} \
+            --parameters "${PARAMS}" \
+            --query "Command.CommandId" \
+            --output text)
+
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30
+          SLEEP_SECONDS=10
+          while [[ ${ATTEMPTS} -lt ${MAX_ATTEMPTS} ]]; do
+            INCOMPLETE=$(aws ssm list-command-invocations --command-id "${ADDITIONAL_COMMAND_ID}" --details --query "length(CommandInvocations[?Status!='Success' && Status!='Failed' && Status!='TimedOut' && Status!='Cancelled'])" --output text)
+            if [[ "${INCOMPLETE}" == "0" ]]; then
+              break
+            fi
+            ATTEMPTS=$((ATTEMPTS + 1))
+            sleep "${SLEEP_SECONDS}"
+          done
+
+          ADDITIONAL_FAILED=$(aws ssm list-command-invocations --command-id "${ADDITIONAL_COMMAND_ID}" --details --query "length(CommandInvocations[?Status=='Failed' || Status=='TimedOut' || Status=='Cancelled'])" --output text)
+
+          {
+            echo "### Additional Target Deploy"
+            echo "- Command ID: ${ADDITIONAL_COMMAND_ID}"
+            echo "- Additional instances: ${ADDITIONAL_INSTANCE_IDS}"
+            echo "- Failed additional targets: ${ADDITIONAL_FAILED}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${ADDITIONAL_FAILED}" != "0" ]]; then
+            echo "Additional target deployment failed." >&2
+            exit 1
+          fi
+
+          echo "additional_instance_ids=${ADDITIONAL_INSTANCE_IDS}" >> "$GITHUB_OUTPUT"
+          echo "all_instance_ids=${INITIAL_INSTANCE_IDS} ${ADDITIONAL_INSTANCE_IDS}" >> "$GITHUB_OUTPUT"
+
       - name: Verify target group health convergence
         id: tg_health
         shell: bash
         run: |
           set -euo pipefail
           TG_ARN="${{ steps.targets.outputs.target_group_arn }}"
-          DEPLOYED_INSTANCE_IDS="${{ steps.targets.outputs.instance_ids }}"
+          DEPLOYED_INSTANCE_IDS="${{ steps.deploy_additional_targets.outputs.all_instance_ids }}"
           ATTEMPTS=0
           MAX_ATTEMPTS=24
           SLEEP_SECONDS=10
