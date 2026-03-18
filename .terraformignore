@@ -1,6 +1,5 @@
 # Terraform local artifacts
 .terraform/
-*.tfstate
 *.tfstate.*
 .terraform.lock.hcl
 
