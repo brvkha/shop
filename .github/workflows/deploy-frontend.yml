@@ -4,6 +4,12 @@ run-name: >-
   Deploy Frontend (${{ github.event.inputs.artifactSha || github.sha }})
 
 on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       artifactSha:
