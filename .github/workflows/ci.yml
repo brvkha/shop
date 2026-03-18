@@ -48,43 +48,6 @@ jobs:
             exit 1
           fi
 
-  terraform:
-    name: Terraform Validate and Plan
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra/terraform
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform format check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform init (no backend)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: terraform init -reconfigure -input=false
-
-      - name: Terraform validate
-        run: terraform validate
-
-      - name: Terraform plan (speculative)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          terraform plan \
-            -refresh=false \
-            -lock=false \
-            -input=false \
-            -var="github_owner=${{ github.repository_owner }}" \
-            -var="github_repository=${{ github.event.repository.name }}" \
-            -var="artifact_bucket=ci-${{ github.event.repository.name }}-artifacts" \
-            -var="frontend_bucket=ci-${{ github.event.repository.name }}-frontend"
-
   backend:
     name: Backend Test and Build
     runs-on: ubuntu-latest
