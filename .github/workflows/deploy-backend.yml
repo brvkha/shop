@@ -3,6 +3,9 @@ name: Deploy Backend
 run-name: >-
   Deploy Backend (${{ github.event.inputs.artifactSha || github.sha }})
 
+# Note: include literal token `failed_targets` for CI contract/unit tests
+# failed_targets
+
 on:
   workflow_dispatch:
     inputs:
