@@ -617,8 +617,8 @@ resource "aws_cloudfront_distribution" "frontend" {
     target_origin_id = "frontend-s3-origin"
     compress         = true
 
-    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    viewer_protocol_policy   = "redirect-to-https"
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy = "redirect-to-https"
   }
 
   restrictions {
@@ -680,12 +680,40 @@ resource "aws_route53_record" "frontend_alias" {
   }
 }
 
+resource "aws_route53_record" "frontend_alias_ipv6" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = var.root_domain_name
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.frontend.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "api_alias" {
   count = var.route53_zone_id != "" ? 1 : 0
 
   zone_id = var.route53_zone_id
   name    = local.api_domain_name
   type    = "A"
+
+  alias {
+    name                   = aws_lb.backend.dns_name
+    zone_id                = aws_lb.backend.zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "api_alias_ipv6" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = local.api_domain_name
+  type    = "AAAA"
 
   alias {
     name                   = aws_lb.backend.dns_name
@@ -1024,4 +1052,9 @@ output "deploy_target_tag" {
     key   = var.deploy_target_tag_key
     value = var.deploy_target_tag_value
   }
+}
+
+output "route53_zone_id" {
+  description = "Route53 hosted zone ID used for public DNS records"
+  value       = var.route53_zone_id
 }
