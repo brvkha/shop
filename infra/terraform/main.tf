@@ -377,11 +377,11 @@ resource "aws_rds_cluster_instance" "aurora" {
 }
 
 resource "aws_lb" "backend" {
-  name               = "khaleo-backend-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = [for subnet in aws_subnet.public : subnet.id]
+  name                       = "khaleo-backend-alb"
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.alb.id]
+  subnets                    = [for subnet in aws_subnet.public : subnet.id]
   enable_deletion_protection = var.alb_enable_deletion_protection
   drop_invalid_header_fields = true
   idle_timeout               = var.alb_idle_timeout
@@ -390,14 +390,14 @@ resource "aws_lb" "backend" {
 }
 
 resource "aws_lb_target_group" "backend" {
-  name        = "khaleo-backend-tg"
-  port        = 8080
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "instance"
-  deregistration_delay       = var.backend_tg_deregistration_delay
+  name                          = "khaleo-backend-tg"
+  port                          = 8080
+  protocol                      = "HTTP"
+  vpc_id                        = aws_vpc.main.id
+  target_type                   = "instance"
+  deregistration_delay          = var.backend_tg_deregistration_delay
   load_balancing_algorithm_type = "least_outstanding_requests"
-  slow_start                 = var.backend_tg_slow_start
+  slow_start                    = var.backend_tg_slow_start
 
   health_check {
     path                = var.backend_health_check_path
@@ -443,9 +443,9 @@ resource "aws_lb_listener" "backend_https" {
 }
 
 resource "aws_launch_template" "backend" {
-  name_prefix   = "khaleo-backend-"
-  image_id      = var.backend_ami_id
-  instance_type = var.backend_instance_type
+  name_prefix            = "khaleo-backend-"
+  image_id               = var.backend_ami_id
+  instance_type          = var.backend_instance_type
   update_default_version = true
 
   vpc_security_group_ids = [aws_security_group.backend.id]
