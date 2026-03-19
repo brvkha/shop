@@ -612,18 +612,13 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "frontend-s3-origin"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "frontend-s3-origin"
+    compress         = true
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy   = "redirect-to-https"
   }
 
   restrictions {
@@ -661,7 +656,7 @@ data "aws_iam_policy_document" "frontend_bucket_policy" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.frontend.arn]
+      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.frontend.id}"]
     }
   }
 }
