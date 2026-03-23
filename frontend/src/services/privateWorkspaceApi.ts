@@ -14,6 +14,13 @@ export type PrivateCardDto = {
   backText: string
 }
 
+export type DeckStatsDto = {
+  deckId: string
+  learning: number
+  review: number
+  new_cards: number
+}
+
 type PagedResponse<T> = {
   content: T[]
 }

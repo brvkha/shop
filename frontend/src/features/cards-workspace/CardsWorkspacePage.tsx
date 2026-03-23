@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import {
   createPrivateCard,
+  createPrivateDeck,
   deletePrivateCard,
+  deletePrivateDeck,
   listPrivateDecks,
   searchPrivateDeckCards,
+  updatePrivateDeck,
 } from '../../services/privateWorkspaceApi'
 
 type DeckOption = {
   id: string
   name: string
+  description: string | null
 }
 
 type CardItem = {
@@ -26,122 +30,340 @@ export function CardsWorkspacePage() {
   const [front, setFront] = useState('')
   const [back, setBack] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [newDeckName, setNewDeckName] = useState('')
+  const [newDeckDesc, setNewDeckDesc] = useState('')
+  const [showCreateDeck, setShowCreateDeck] = useState(false)
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null)
+  const [editDeckName, setEditDeckName] = useState('')
+  const [editDeckDesc, setEditDeckDesc] = useState('')
+
+  const loadDecks = async () => {
+    try {
+      const items = await listPrivateDecks('')
+      setDecks(items)
+      if (items.length > 0 && !selectedDeckId) {
+        setSelectedDeckId(items[0].id)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load private decks')
+    }
+  }
 
   useEffect(() => {
-    void listPrivateDecks('')
-      .then((items) => {
-        const mapped = items.map((deck) => ({ id: deck.id, name: deck.name }))
-        setDecks(mapped)
-        if (mapped.length > 0) {
-          setSelectedDeckId(mapped[0].id)
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load private decks'))
+    void loadDecks()
   }, [])
 
+  // Debounced search for cards
   useEffect(() => {
     if (!selectedDeckId) {
       setCards([])
       return
     }
-    void searchPrivateDeckCards(selectedDeckId, search)
-      .then((items) => setCards(items))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to search cards'))
+
+    const timer = setTimeout(() => {
+      void searchPrivateDeckCards(selectedDeckId, search)
+        .then((items) => setCards(items))
+        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to search cards'))
+    }, 300)
+
+    return () => clearTimeout(timer)
   }, [selectedDeckId, search])
 
+  const handleCreateDeck = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newDeckName.trim()) return
+    try {
+      setError('')
+      await createPrivateDeck({
+        name: newDeckName.trim(),
+        description: newDeckDesc.trim(),
+      })
+      setNewDeckName('')
+      setNewDeckDesc('')
+      setShowCreateDeck(false)
+      setSuccess('Deck created')
+      await loadDecks()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create deck')
+    }
+  }
+
+  const handleDeleteDeck = async (deckId: string) => {
+    if (!confirm('Delete this deck and all its cards?')) return
+    try {
+      setError('')
+      await deletePrivateDeck(deckId)
+      setSuccess('Deck deleted')
+      await loadDecks()
+      if (selectedDeckId === deckId) {
+        setSelectedDeckId('')
+        setCards([])
+      }
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete deck')
+    }
+  }
+
+  const handleUpdateDeck = async (deckId: string) => {
+    if (!editDeckName.trim()) return
+    try {
+      setError('')
+      await updatePrivateDeck({
+        deckId,
+        name: editDeckName.trim(),
+        description: editDeckDesc.trim(),
+      })
+      setEditingDeckId(null)
+      setSuccess('Deck updated')
+      await loadDecks()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update deck')
+    }
+  }
+
+  const selectedDeck = decks.find((d) => d.id === selectedDeckId)
+
   return (
-    <section>
-      <h1 className="text-2xl font-semibold">Cards Workspace</h1>
-      <p className="mt-2 text-sm text-slate-600">CRUD and search are scoped to your private decks only.</p>
-
-      <div className="mt-4 rounded border border-slate-200 bg-white p-4">
-        <label className="text-sm" htmlFor="private-deck-select">Private deck</label>
-        <select
-          id="private-deck-select"
-          className="mt-1 block rounded border border-slate-300 px-3 py-2"
-          value={selectedDeckId}
-          onChange={(event) => setSelectedDeckId(event.target.value)}
-        >
-          {decks.map((deck) => (
-            <option key={deck.id} value={deck.id}>
-              {deck.name}
-            </option>
-          ))}
-        </select>
+    <section className="h-screen flex flex-col">
+      <div className="px-6 py-4 border-b border-slate-200">
+        <h1 className="text-2xl font-semibold">Cards Workspace</h1>
+        <p className="mt-1 text-sm text-slate-600">Manage your private decks and cards</p>
       </div>
 
-      <form
-        className="mt-3 grid gap-2 rounded border border-slate-200 bg-white p-4 md:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (!selectedDeckId || !front.trim() || !back.trim()) {
-            return
-          }
-          void createPrivateCard({
-            deckId: selectedDeckId,
-            frontText: front.trim(),
-            backText: back.trim(),
-          })
-            .then(() => {
-              setFront('')
-              setBack('')
-              return searchPrivateDeckCards(selectedDeckId, search)
-            })
-            .then((items) => setCards(items))
-            .catch((err) => setError(err instanceof Error ? err.message : 'Failed to create card'))
-        }}
-      >
-        <input
-          aria-label="Private card front"
-          className="rounded border border-slate-300 px-3 py-2"
-          placeholder="Front"
-          value={front}
-          onChange={(event) => setFront(event.target.value)}
-        />
-        <input
-          aria-label="Private card back"
-          className="rounded border border-slate-300 px-3 py-2"
-          placeholder="Back"
-          value={back}
-          onChange={(event) => setBack(event.target.value)}
-        />
-        <button className="rounded bg-emerald-700 px-3 py-2 text-white md:col-span-2" type="submit">
-          Create private card
-        </button>
-      </form>
+      {error && (
+        <div className="mx-6 mt-3 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mx-6 mt-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          {success}
+        </div>
+      )}
 
-      <div className="mt-3 rounded border border-slate-200 bg-white p-4">
-        <label className="text-sm" htmlFor="private-card-search">Card search</label>
-        <input
-          id="private-card-search"
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
-          placeholder="Search cards in selected private deck"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </div>
-
-      {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-
-      <ul className="mt-4 grid gap-3 md:grid-cols-2">
-        {cards.map((card) => (
-          <li className="rounded border border-slate-200 bg-white p-4" key={card.id}>
-            <p className="font-medium">{card.frontText}</p>
-            <p className="text-sm text-slate-600">{card.backText}</p>
+      <div className="flex flex-1 gap-4 overflow-hidden p-6">
+        {/* Left Panel: Decks List */}
+        <div className="w-72 flex flex-col border border-slate-200 rounded bg-white overflow-hidden">
+          <div className="border-b border-slate-200 p-4">
+            <h2 className="font-semibold text-slate-900">Private Decks</h2>
             <button
-              className="mt-2 rounded bg-rose-600 px-3 py-1 text-white"
-              onClick={() => {
-                void deletePrivateCard(card.id)
-                  .then(() => searchPrivateDeckCards(selectedDeckId, search))
-                  .then((items) => setCards(items))
-                  .catch((err) => setError(err instanceof Error ? err.message : 'Failed to delete card'))
-              }}
+              onClick={() => setShowCreateDeck(true)}
+              className="mt-2 w-full rounded bg-emerald-600 px-3 py-2 text-white text-sm hover:bg-emerald-700"
             >
-              Delete
+              + Create Deck
             </button>
-          </li>
-        ))}
-      </ul>
+          </div>
+
+          {showCreateDeck && (
+            <form onSubmit={handleCreateDeck} className="border-b border-slate-200 p-4">
+              <input
+                className="w-full rounded border border-slate-300 px-2 py-1 text-sm mb-2"
+                placeholder="Deck name"
+                value={newDeckName}
+                onChange={(e) => setNewDeckName(e.target.value)}
+              />
+              <textarea
+                className="w-full rounded border border-slate-300 px-2 py-1 text-sm mb-2"
+                placeholder="Description"
+                rows={2}
+                value={newDeckDesc}
+                onChange={(e) => setNewDeckDesc(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 rounded bg-emerald-600 px-2 py-1 text-white text-sm hover:bg-emerald-700">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateDeck(false)}
+                  className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="flex-1 overflow-y-auto">
+            {decks.length === 0 ? (
+              <div className="p-4 text-center text-sm text-slate-500">No decks yet</div>
+            ) : (
+              <ul className="space-y-1 p-2">
+                {decks.map((deck) => (
+                  <li key={deck.id}>
+                    {editingDeckId === deck.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); void handleUpdateDeck(deck.id) }} className="p-2 space-y-2">
+                        <input
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                          value={editDeckName}
+                          onChange={(e) => setEditDeckName(e.target.value)}
+                        />
+                        <textarea
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
+                          rows={2}
+                          value={editDeckDesc}
+                          onChange={(e) => setEditDeckDesc(e.target.value)}
+                        />
+                        <div className="flex gap-1">
+                          <button type="submit" className="flex-1 rounded bg-blue-600 px-2 py-1 text-white text-xs hover:bg-blue-700">
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingDeckId(null)}
+                            className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedDeckId(deck.id)}
+                        className={`w-full text-left p-3 rounded transition ${
+                          selectedDeckId === deck.id
+                            ? 'bg-blue-100 border border-blue-300'
+                            : 'bg-slate-50 border border-transparent hover:bg-slate-100'
+                        }`}
+                      >
+                        <p className="font-medium text-sm">{deck.name}</p>
+                        {deck.description && (
+                          <p className="text-xs text-slate-500 truncate">{deck.description}</p>
+                        )}
+                        <div className="mt-2 flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingDeckId(deck.id)
+                              setEditDeckName(deck.name)
+                              setEditDeckDesc(deck.description || '')
+                            }}
+                            className="text-xs px-2 py-1 rounded border border-slate-300 hover:bg-slate-200"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleDeleteDeck(deck.id)
+                            }}
+                            className="text-xs px-2 py-1 rounded border border-rose-300 text-rose-600 hover:bg-rose-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Right Panel: Cards Table */}
+        <div className="flex-1 flex flex-col border border-slate-200 rounded bg-white overflow-hidden">
+          {selectedDeck ? (
+            <>
+              <div className="border-b border-slate-200 p-4">
+                <h2 className="font-semibold text-slate-900">{selectedDeck.name}</h2>
+                <p className="text-sm text-slate-600 mt-1">{cards.length} cards</p>
+              </div>
+
+              <div className="p-4 border-b border-slate-200">
+                <input
+                  id="private-card-search"
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="Search cards..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!selectedDeckId || !front.trim() || !back.trim()) return
+                  void createPrivateCard({
+                    deckId: selectedDeckId,
+                    frontText: front.trim(),
+                    backText: back.trim(),
+                  })
+                    .then(() => {
+                      setFront('')
+                      setBack('')
+                      return searchPrivateDeckCards(selectedDeckId, search)
+                    })
+                    .then((items) => setCards(items))
+                    .catch((err) => setError(err instanceof Error ? err.message : 'Failed to create card'))
+                }}
+                className="p-4 border-b border-slate-200 grid grid-cols-4 gap-2"
+              >
+                <input
+                  className="rounded border border-slate-300 px-3 py-2 text-sm"
+                  placeholder="Front"
+                  value={front}
+                  onChange={(e) => setFront(e.target.value)}
+                />
+                <input
+                  className="rounded border border-slate-300 px-3 py-2 text-sm col-span-2"
+                  placeholder="Back"
+                  value={back}
+                  onChange={(e) => setBack(e.target.value)}
+                />
+                <button className="rounded bg-emerald-600 px-3 py-2 text-white text-sm hover:bg-emerald-700">
+                  Add
+                </button>
+              </form>
+
+              <div className="flex-1 overflow-auto">
+                {cards.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-slate-500">No cards found</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 border-b border-slate-200 bg-slate-50">
+                      <tr>
+                        <th className="p-3 text-left font-medium text-slate-700 w-1/3">Front</th>
+                        <th className="p-3 text-left font-medium text-slate-700 w-1/3">Back</th>
+                        <th className="p-3 text-right font-medium text-slate-700 w-1/4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cards.map((card, idx) => (
+                        <tr key={card.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                          <td className="p-3 text-slate-900 truncate">{card.frontText}</td>
+                          <td className="p-3 text-slate-600 truncate">{card.backText}</td>
+                          <td className="p-3 text-right">
+                            <button
+                              className="rounded bg-rose-600 px-3 py-1 text-white text-xs hover:bg-rose-700"
+                              onClick={() => {
+                                void deletePrivateCard(card.id)
+                                  .then(() => searchPrivateDeckCards(selectedDeckId, search))
+                                  .then((items) => setCards(items))
+                                  .catch((err) => setError(err instanceof Error ? err.message : 'Failed to delete card'))
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-500">
+              <p>Select a deck to view cards</p>
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   )
 }

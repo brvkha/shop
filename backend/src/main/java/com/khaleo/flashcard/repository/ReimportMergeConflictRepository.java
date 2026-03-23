@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 
 public interface ReimportMergeConflictRepository extends JpaRepository<ReimportMergeConflict, UUID> {
 
@@ -14,5 +15,6 @@ public interface ReimportMergeConflictRepository extends JpaRepository<ReimportM
 
     Optional<ReimportMergeConflict> findByIdAndDeckImportLinkId(UUID id, UUID deckImportLinkId);
 
+    @Modifying
     void deleteByDeckImportLinkId(UUID deckImportLinkId);
 }

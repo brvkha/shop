@@ -57,4 +57,28 @@ public interface CardLearningStateRepository extends JpaRepository<CardLearningS
 
     @Modifying
     void deleteByCardIdIn(Collection<UUID> cardIds);
+
+    @Query("""
+        SELECT COUNT(cls) FROM CardLearningState cls
+        WHERE cls.card.deck.id = ?1 
+          AND cls.state IN ('LEARNING', 'RELEARNING')
+        """)
+    long countLearningCardsByDeckId(UUID deckId);
+
+    @Query("""
+        SELECT COUNT(cls) FROM CardLearningState cls
+        WHERE cls.card.deck.id = ?1 
+          AND cls.state = 'REVIEW'
+        """)
+    long countReviewCardsByDeckId(UUID deckId);
+
+    @Query("""
+        SELECT COUNT(c) FROM Card c
+        WHERE c.deck.id = ?1
+          AND NOT EXISTS (
+            SELECT 1 FROM CardLearningState cls 
+            WHERE cls.card.id = c.id
+          )
+        """)
+    long countNewCardsByDeckId(UUID deckId);
 }

@@ -11,6 +11,8 @@ import com.khaleo.flashcard.repository.CardLearningStateRepository;
 import com.khaleo.flashcard.repository.CardRepository;
 import com.khaleo.flashcard.repository.DeckRepository;
 import com.khaleo.flashcard.repository.UserRepository;
+import com.khaleo.flashcard.repository.DeckImportLinkRepository;
+import com.khaleo.flashcard.repository.ReimportMergeConflictRepository;
 import com.khaleo.flashcard.service.activitylog.StudyActivityLogPublisher;
 import com.khaleo.flashcard.service.media.MediaReferenceService;
 import java.math.BigDecimal;
@@ -37,6 +39,8 @@ public class RelationalPersistenceService {
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;
     private final CardLearningStateRepository cardLearningStateRepository;
+    private final DeckImportLinkRepository deckImportLinkRepository;
+    private final ReimportMergeConflictRepository reimportMergeConflictRepository;
     private final StudyActivityLogPublisher studyActivityLogPublisher;
     private final PersistenceValidationExceptionMapper exceptionMapper;
     private final CardLearningStateUpdateService cardLearningStateUpdateService;
@@ -161,6 +165,10 @@ public class RelationalPersistenceService {
                 "delete",
                 "deck",
                 deckId.toString());
+
+        // Clean up import link related data
+        deckImportLinkRepository.deleteBySourceDeckId(deckId);
+        deckImportLinkRepository.deleteByTargetPrivateDeckId(deckId);
 
         List<Card> deckCards = cardRepository.findByDeckId(deckId);
         List<UUID> cardIds = deckCards.stream().map(Card::getId).toList();

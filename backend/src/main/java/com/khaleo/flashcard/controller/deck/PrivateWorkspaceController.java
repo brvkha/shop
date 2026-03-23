@@ -5,10 +5,12 @@ import com.khaleo.flashcard.controller.card.dto.CardSearchQuery;
 import com.khaleo.flashcard.controller.common.PagedResponse;
 import com.khaleo.flashcard.controller.deck.dto.CreateDeckRequest;
 import com.khaleo.flashcard.controller.deck.dto.DeckResponse;
+import com.khaleo.flashcard.controller.deck.dto.DeckStatsResponse;
 import com.khaleo.flashcard.controller.deck.dto.UpdateDeckRequest;
 import com.khaleo.flashcard.entity.Deck;
 import com.khaleo.flashcard.service.auth.VerifiedAccountGuard;
 import com.khaleo.flashcard.service.deck.DeckAuthorizationService;
+import com.khaleo.flashcard.service.deck.DeckStatsService;
 import com.khaleo.flashcard.service.deck.PrivateDeckCrudService;
 import com.khaleo.flashcard.service.deck.PrivateWorkspaceService;
 import com.khaleo.flashcard.service.persistence.RelationalPersistenceService;
@@ -36,6 +38,7 @@ public class PrivateWorkspaceController {
     private final VerifiedAccountGuard verifiedAccountGuard;
     private final PrivateWorkspaceService privateWorkspaceService;
     private final PrivateDeckCrudService privateDeckCrudService;
+    private final DeckStatsService deckStatsService;
 
     @GetMapping
     public PagedResponse<DeckResponse> listPrivateDecks(
@@ -87,6 +90,13 @@ public class PrivateWorkspaceController {
         UUID actorId = deckAuthorizationService.requireActorId("delete", "deck", id.toString());
         verifiedAccountGuard.requireVerified(actorId, "delete", "deck", id.toString());
         privateDeckCrudService.deletePrivateDeck(actorId, id);
+    }
+
+    @GetMapping("/{deckId}/stats")
+    public DeckStatsResponse getDeckStats(@PathVariable("deckId") UUID deckId) {
+        UUID actorId = deckAuthorizationService.requireActorId("read", "deck", deckId.toString());
+        verifiedAccountGuard.requireVerified(actorId, "read", "deck", deckId.toString());
+        return deckStatsService.getDeckStats(deckId);
     }
 
     @GetMapping("/{deckId}/cards/search")

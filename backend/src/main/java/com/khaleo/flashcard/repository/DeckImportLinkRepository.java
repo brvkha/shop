@@ -4,6 +4,7 @@ import com.khaleo.flashcard.entity.DeckImportLink;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +21,10 @@ public interface DeckImportLinkRepository extends JpaRepository<DeckImportLink, 
             where dil.id = :id
             """)
     Optional<DeckImportLink> findWithDecksById(@Param("id") UUID id);
+
+    @Modifying
+    void deleteBySourceDeckId(UUID sourceDeckId);
+
+    @Modifying
+    void deleteByTargetPrivateDeckId(UUID targetPrivateDeckId);
 }

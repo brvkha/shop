@@ -25,6 +25,8 @@ type RateCardResponseDto = {
   newDifficulty: number
 }
 
+export type { RateCardResponseDto }
+
 type RatingValue = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 
 export async function getNextSessionCards(deckId: string): Promise<StudySessionCardDto[]> {
