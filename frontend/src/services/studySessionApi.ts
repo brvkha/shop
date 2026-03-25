@@ -45,3 +45,20 @@ export async function rateSessionCard(cardId: string, rating: RatingValue, timeS
     }),
   })
 }
+
+export type StudyRatingPreviewDto = {
+  nextReviewAt: string
+  scheduledDays: number
+  nextState: 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING' | 'MASTERED'
+}
+
+export type StudyRatingPreviewsDto = {
+  again: StudyRatingPreviewDto
+  hard: StudyRatingPreviewDto
+  good: StudyRatingPreviewDto
+  easy: StudyRatingPreviewDto
+}
+
+export async function previewSessionCardRatings(cardId: string): Promise<StudyRatingPreviewsDto> {
+  return requestJson<StudyRatingPreviewsDto>(`/api/v1/study-session/cards/${cardId}/preview-ratings`)
+}

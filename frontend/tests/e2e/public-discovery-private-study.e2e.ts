@@ -102,16 +102,16 @@ test('guest browse, login import, and study access flow', async ({ page }) => {
   await page.getByLabel('Password').fill('123456')
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await page.goto('/decks')
+  await page.goto('/flashcard/decks')
   await page.getByRole('button', { name: 'Import to Study' }).click()
 
-  await page.goto('/study')
+  await page.goto('/flashcard/study')
   await expect(page.getByText('Imported Biology')).toBeVisible()
   await page.getByRole('link', { name: 'Start session' }).click()
 
   await expect(page.getByRole('heading', { name: 'Study Session' })).toBeVisible()
   await expect(page.getByText('What is DNA?')).toBeVisible()
-  await page.getByRole('button', { name: 'Reveal answer' }).click()
+  await page.getByRole('button', { name: 'Flashcard front side' }).click()
   await expect(page.getByText('Genetic material')).toBeVisible()
   await page.getByRole('button', { name: 'Good' }).click()
   await expect(page.getByText('Session complete. No due cards right now.')).toBeVisible()

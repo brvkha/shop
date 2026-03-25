@@ -166,7 +166,7 @@ export function CardsWorkspacePage() {
   }
 
   return (
-    <section className="h-screen flex flex-col">
+    <section className="h-[calc(100vh-12rem)] min-h-[560px] flex flex-col overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200">
         <h1 className="text-2xl font-semibold">Cards Workspace</h1>
         <p className="mt-1 text-sm text-slate-600">Manage your private decks and cards</p>
@@ -183,9 +183,9 @@ export function CardsWorkspacePage() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-4 overflow-hidden p-6">
+      <div className="flex flex-1 gap-4 overflow-hidden p-4">
         {/* Left Panel: Decks List */}
-        <div className="w-72 flex flex-col border border-slate-200 rounded bg-white overflow-hidden">
+        <div className="w-44 flex flex-col border border-slate-200 rounded bg-white overflow-hidden">
           <div className="border-b border-slate-200 p-4">
             <h2 className="font-semibold text-slate-900">Private Decks</h2>
             <button
@@ -373,6 +373,7 @@ export function CardsWorkspacePage() {
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 border-b border-slate-200 bg-slate-50">
                       <tr>
+                        <th className="p-3 text-left font-medium text-slate-700 w-16">#</th>
                         <th className="p-3 text-left font-medium text-slate-700 w-1/3">Front</th>
                         <th className="p-3 text-left font-medium text-slate-700 w-1/3">Back</th>
                         <th className="p-3 text-right font-medium text-slate-700 w-1/4">Action</th>
@@ -381,6 +382,7 @@ export function CardsWorkspacePage() {
                     <tbody>
                       {cards.map((card, idx) => (
                         <tr key={card.id} className={`border-b border-slate-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                          <td className="p-3 text-slate-500">{idx + 1}</td>
                           <td className="p-3 text-slate-900">
                             {editingCardId === card.id ? (
                               <input

@@ -105,7 +105,7 @@ export function DecksDiscoveryPage() {
                     const message = 'Please sign in to import decks'
                     setError(message)
                     pushError(message)
-                    navigate('/login?returnTo=%2Fdecks')
+                    navigate('/login?returnTo=%2Fflashcard%2Fdecks')
                     return
                   }
                   void importPublicDeck(deck.id)
@@ -151,7 +151,7 @@ export function DecksDiscoveryPage() {
                           const message = 'Please sign in to import decks'
                           setError(message)
                           pushError(message)
-                          navigate('/login?returnTo=%2Fdecks')
+                          navigate('/login?returnTo=%2Fflashcard%2Fdecks')
                           return
                         }
                         void importPublicDeck(deck.id)

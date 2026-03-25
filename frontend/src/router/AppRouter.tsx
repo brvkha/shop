@@ -13,6 +13,8 @@ import { AdminUsersPage } from '../features/admin/users/AdminUsersPage'
 import { AdminDecksPage } from '../features/admin/decks/AdminDecksPage'
 import { AdminCardsPage } from '../features/admin/cards/AdminCardsPage'
 import { AdminModerationAuditPage } from '../features/admin/audit/AdminModerationAuditPage'
+import { FSRSTestPage } from '../features/admin/fsrs-test/FSRSTestPage'
+import { ListeningPage } from '../features/listening/ListeningPage'
 
 function BlockedPage() {
   return (
@@ -23,14 +25,7 @@ function BlockedPage() {
 }
 
 function HomePage() {
-  return (
-    <section className="rounded border border-slate-200 bg-white p-5">
-      <h1 className="text-2xl font-semibold">Study Dashboard</h1>
-      <p className="mt-2 text-slate-600">
-        Use Decks, Cards, and Study routes to complete your daily flow.
-      </p>
-    </section>
-  )
+  return <Navigate replace to="/flashcard/decks" />
 }
 
 export function AppRouter() {
@@ -40,14 +35,16 @@ export function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/blocked" element={<BlockedPage />} />
-        <Route path="/decks" element={<DecksPage />} />
+        <Route path="/flashcard/decks" element={<DecksPage />} />
 
         <Route element={<RequireAuth />}>
           <Route index element={<HomePage />} />
-          <Route path="/cards" element={<CardsWorkspacePage />} />
-          <Route path="/study" element={<StudyWorkspacePage />} />
+          <Route path="/flashcard/cards" element={<CardsWorkspacePage />} />
+          <Route path="/flashcard/study" element={<StudyWorkspacePage />} />
+          <Route path="/flashcard/study/session/:deckId" element={<StudySessionPage />} />
           <Route path="/study/session/:deckId" element={<StudySessionPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/flashcard/settings" element={<ProfilePage />} />
+          <Route path="/listening" element={<ListeningPage />} />
         </Route>
 
         <Route path="/admin" element={<RequireAdmin />}>
@@ -56,7 +53,13 @@ export function AppRouter() {
           <Route path="decks" element={<AdminDecksPage />} />
           <Route path="cards" element={<AdminCardsPage />} />
           <Route path="audit" element={<AdminModerationAuditPage />} />
+          <Route path="fsrs-test" element={<FSRSTestPage />} />
         </Route>
+
+        <Route path="/decks" element={<Navigate replace to="/flashcard/decks" />} />
+        <Route path="/cards" element={<Navigate replace to="/flashcard/cards" />} />
+        <Route path="/study" element={<Navigate replace to="/flashcard/study" />} />
+        <Route path="/profile" element={<Navigate replace to="/flashcard/settings" />} />
 
         <Route path="*" element={<Navigate replace to="/" />} />
       </Route>

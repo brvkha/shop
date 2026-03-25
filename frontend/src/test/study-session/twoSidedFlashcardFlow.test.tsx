@@ -41,20 +41,22 @@ describe('StudySessionPage', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter initialEntries={['/study/session/d1']}>
+      <MemoryRouter initialEntries={['/flashcard/study/session/d1']}>
         <Routes>
-          <Route path="/study/session/:deckId" element={<StudySessionPage />} />
+          <Route path="/flashcard/study/session/:deckId" element={<StudySessionPage />} />
         </Routes>
       </MemoryRouter>,
     )
 
     await waitFor(() => expect(screen.getByText('Question front')).toBeInTheDocument())
 
-    const goodButton = screen.getByRole('button', { name: 'Good' })
-    expect(goodButton).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Good' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Reveal answer' }))
+    await user.click(screen.getByRole('button', { name: 'Flashcard front side' }))
     expect(screen.getByText('Answer back')).toBeInTheDocument()
+
+    const goodButton = screen.getByRole('button', { name: 'Good' })
+    expect(goodButton).not.toBeDisabled()
 
     await user.click(goodButton)
 

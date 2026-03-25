@@ -4,9 +4,9 @@ run-name: >-
   Deploy Frontend (${{ github.event.inputs.artifactSha || github.sha }})
 
 on:
-  schedule:
-    # Run at the top of every hour. Also keep manual dispatch.
-    - cron: '0 11,23 * * *'
+  # schedule:
+  #   # Run at the top of every hour. Also keep manual dispatch.
+  #   - cron: '0 11,23 * * *'
   workflow_dispatch:
     inputs:
       artifactSha:

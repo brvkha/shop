@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { getNextSessionCards, rateSessionCard, type RateCardResponseDto, type StudySessionCardDto } from '../../services/studySessionApi'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import {
+  getNextSessionCards,
+  previewSessionCardRatings,
+  rateSessionCard,
+  type StudyRatingPreviewsDto,
+  type StudySessionCardDto,
+} from '../../services/studySessionApi'
 
 type UiRating = 'Again' | 'Hard' | 'Good' | 'Easy'
 
@@ -10,54 +16,36 @@ function toApiRating(rating: UiRating): 'AGAIN' | 'HARD' | 'GOOD' | 'EASY' {
   return rating.toUpperCase() as 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 }
 
-function formatNextReview(nextReviewAt: string): string {
-  const nextTime = new Date(nextReviewAt)
-  const now = new Date()
-  const diffMs = nextTime.getTime() - now.getTime()
-  
-  if (diffMs < 60000) {
-    return '~1 min'
-  } else if (diffMs < 3600000) {
-    const minutes = Math.round(diffMs / 60000)
-    return `~${minutes} min`
-  } else if (diffMs < 86400000) {
-    const hours = Math.round(diffMs / 3600000)
-    return `~${hours}h`
-  } else {
-    const days = Math.round(diffMs / 86400000)
-    return `~${days}d`
+function formatPhrase(days: number) {
+  if (days === 0) return 'Today'
+  if (days < 1) {
+    const mins = Math.round(days * 24 * 60)
+    if (mins >= 60) {
+      const hours = Math.round(mins / 60)
+      return `${hours}h`
+    }
+    return `${Math.max(1, mins)}m`
   }
+  if (days >= 30) {
+    const months = Math.round(days / 30)
+    return `${months}mon`
+  }
+  return `${Math.round(days)}d`
 }
 
-function predictNextReviewTime(sourceTier: string, rating: UiRating): string {
-  const isLearning = sourceTier.includes('LEARNING')
-  const isReview = sourceTier.includes('REVIEW')
-  const isNew = sourceTier === 'NEW'
-
-  if (rating === 'Again') {
-    return '1 min'
-  } else if (rating === 'Hard') {
-    if (isNew) return '5 min'
-    if (isLearning) return '10 min'
-    if (isReview) return '2-5 d'
-    return '5 min'
-  } else if (rating === 'Good') {
-    if (isNew) return '1 d'
-    if (isLearning) return '1 d'
-    if (isReview) return '5-10 d'
-    return '1 d'
-  } else if (rating === 'Easy') {
-    if (isNew) return '4 d'
-    if (isLearning) return '3 d'
-    if (isReview) return '10-30 d'
-    return '4 d'
-  }
-  return ''
+function calculateIntervalFromTimestamp(isoString: string): number {
+  const reviewDate = new Date(isoString)
+  const now = new Date()
+  const diffMs = reviewDate.getTime() - now.getTime()
+  const diffDays = diffMs / (1000 * 60 * 60 * 24)
+  return Math.max(0, diffDays)
 }
 
 export function StudySessionPage() {
   const { deckId } = useParams<{ deckId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const deckName = (location.state as { deckName?: string } | null)?.deckName
 
   const [cards, setCards] = useState<StudySessionCardDto[]>([])
   const [loading, setLoading] = useState(false)
@@ -65,7 +53,8 @@ export function StudySessionPage() {
   const [revealed, setRevealed] = useState(false)
   const [error, setError] = useState('')
   const [shownAt, setShownAt] = useState<number>(Date.now())
-  const [lastRating, setLastRating] = useState<RateCardResponseDto | null>(null)
+  const [ratingPreview, setRatingPreview] = useState<StudyRatingPreviewsDto | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const current = useMemo(() => cards[0], [cards])
 
@@ -104,6 +93,36 @@ export function StudySessionPage() {
     return () => window.clearInterval(timer)
   }, [cards.length, loading, refresh])
 
+  useEffect(() => {
+    if (!current?.cardId) {
+      setRatingPreview(null)
+      return
+    }
+
+    setPreviewLoading(true)
+    void previewSessionCardRatings(current.cardId)
+      .then((response) => setRatingPreview(response))
+      .catch(() => setRatingPreview(null))
+      .finally(() => setPreviewLoading(false))
+  }, [current?.cardId])
+
+  const getPreviewLabel = (value: UiRating): string => {
+    if (!ratingPreview) {
+      return previewLoading ? '...' : '-'
+    }
+
+    const nextReviewAt =
+      value === 'Again'
+        ? ratingPreview.again.nextReviewAt
+        : value === 'Hard'
+          ? ratingPreview.hard.nextReviewAt
+          : value === 'Good'
+            ? ratingPreview.good.nextReviewAt
+            : ratingPreview.easy.nextReviewAt
+
+    return formatPhrase(calculateIntervalFromTimestamp(nextReviewAt))
+  }
+
   const onRate = async (value: UiRating) => {
     if (!current || rating) {
       return
@@ -112,8 +131,7 @@ export function StudySessionPage() {
     setError('')
     try {
       const elapsed = Math.max(0, Date.now() - shownAt)
-      const result = await rateSessionCard(current.cardId, toApiRating(value), elapsed)
-      setLastRating(result)
+      await rateSessionCard(current.cardId, toApiRating(value), elapsed)
       setCards((prev) => {
         const next = prev.slice(1)
         if (next.length === 0) {
@@ -121,6 +139,7 @@ export function StudySessionPage() {
         }
         return next
       })
+      setRatingPreview(null)
       setRevealed(false)
       setShownAt(Date.now())
     } catch (err) {
@@ -131,16 +150,15 @@ export function StudySessionPage() {
   }
 
   return (
-    <section>
+    <section className="h-[calc(100vh-11rem)] min-h-[500px] overflow-hidden">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Study Session</h1>
-        <button className="rounded border border-slate-300 px-3 py-2" onClick={() => navigate('/study')}>
+        <button className="rounded border border-slate-300 px-3 py-2" onClick={() => navigate('/flashcard/study')}>
           Back to study workspace
         </button>
       </div>
 
-      <p className="mt-2 text-sm text-slate-600">Deck: {deckId ?? 'unknown'}</p>
-      <p className="mt-1 text-sm text-slate-600">Cards remaining: {cards.length}</p>
+      {deckName ? <p className="mt-2 text-sm text-slate-600">Name: {deckName}</p> : null}
 
       {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
       {loading ? <p className="mt-3 text-sm text-slate-500">Loading session...</p> : null}
@@ -152,55 +170,51 @@ export function StudySessionPage() {
       ) : null}
 
       {current ? (
-        <article className="mt-4 rounded border border-slate-200 bg-white p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Front side</p>
-          <p className="mt-1 text-lg font-medium">{current.frontText}</p>
+        <article className="mt-3 h-[calc(100%-4rem)] rounded border border-slate-200 bg-white p-4">
+
+          <div className="mt-3">
+            <button
+              aria-label={revealed ? 'Flashcard back side' : 'Flashcard front side'}
+              className="w-full rounded-2xl text-left"
+              onClick={() => setRevealed(true)}
+              type="button"
+            >
+              <div className="rounded-3xl border border-slate-300 bg-gradient-to-br from-white to-slate-100 p-6 shadow-sm">
+                {revealed ? (
+                  <div className="space-y-4">
+                    <p className="text-2xl font-semibold text-slate-900">{current.frontText}</p>
+                    <div className="h-px bg-slate-300" />
+                    <p className="text-xl text-slate-700">{current.backText}</p>
+                  </div>
+                ) : (
+                  <div className="min-h-64 flex items-center justify-center text-center">
+                    <p className="text-3xl font-semibold text-slate-900">{current.frontText}</p>
+                  </div>
+                )}
+              </div>
+            </button>
+          </div>
 
           {revealed ? (
-            <>
-              <p className="mt-4 text-xs uppercase tracking-wide text-slate-500">Back side</p>
-              <p className="mt-1 text-slate-700">{current.backText}</p>
-            </>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              className="rounded bg-slate-900 px-3 py-2 text-white"
-              onClick={() => setRevealed(true)}
-              disabled={revealed}
-            >
-              {revealed ? 'Answer revealed' : 'Reveal answer'}
-            </button>
-            <div className="flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               {uiRatings.map((value) => (
                 <div key={value} className="flex flex-col items-center">
                   <button
-                    className="rounded border border-slate-300 px-3 py-2 disabled:opacity-50 min-w-16 text-center"
+                    className="min-w-20 rounded border border-slate-300 px-3 py-2 text-center disabled:opacity-50"
                     onClick={() => void onRate(value)}
-                    disabled={!revealed || rating}
+                    disabled={rating}
                   >
                     {value}
                   </button>
-                  {revealed && (
-                    <p className="text-xs text-slate-500 font-medium mt-1">
-                      {predictNextReviewTime(current?.sourceTier ?? 'NEW', value)}
-                    </p>
-                  )}
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    {getPreviewLabel(value)}
+                  </p>
                 </div>
               ))}
             </div>
-          </div>
-
-          {lastRating ? (
-            <div className="mt-4 rounded border border-blue-200 bg-blue-50 p-3">
-              <p className="text-sm font-medium text-blue-900">
-                Rated: <span className="capitalize">{lastRating.state}</span>
-              </p>
-              <p className="text-sm text-blue-700 mt-1">
-                Next review: {formatNextReview(lastRating.nextReviewAt)}
-              </p>
-            </div>
-          ) : null}
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">Tap the card to reveal answer and rating buttons.</p>
+          )}
         </article>
       ) : null}
     </section>

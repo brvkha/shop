@@ -124,7 +124,8 @@ export function StudyWorkspacePage() {
               <div className="mt-3 flex gap-2">
                 <Link
                   className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
-                  to={`/study/session/${deck.id}`}
+                  state={{ deckName: deck.name }}
+                  to={`/flashcard/study/session/${deck.id}`}
                 >
                   Start session
                 </Link>
@@ -175,7 +176,8 @@ export function StudyWorkspacePage() {
                     <div className="flex justify-end gap-2">
                       <Link
                         className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100"
-                        to={`/study/session/${deck.id}`}
+                        state={{ deckName: deck.name }}
+                        to={`/flashcard/study/session/${deck.id}`}
                       >
                         Start
                       </Link>

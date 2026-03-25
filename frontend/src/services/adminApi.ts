@@ -171,3 +171,42 @@ export async function exportAdminModerationActionsCsv(params?: {
 
   return response.text()
 }
+
+// FSRS Algorithm Testing
+export type FSRSTestRequest = {
+  stability: number
+  difficulty: number
+  reps: number
+  lapses: number
+  elapsedDays: number
+  state?: string  // Optional: NEW, LEARNING, REVIEW, RELEARNING - if not provided, backend infers from reps
+  learningStepGoodCount?: number
+}
+
+export type FSRSRatingResult = {
+  rating: string
+  nextReviewAt: string
+  scheduledDays: number
+  stability: number
+  difficulty: number
+  newReps: number
+  newLapses: number
+  reps: number
+  lapses: number
+  nextState: string  // NEW, LEARNING, REVIEW, RELEARNING
+  learningStepGoodCount: number
+}
+
+export type FSRSTestResponse = {
+  againResult: FSRSRatingResult
+  hardResult: FSRSRatingResult
+  goodResult: FSRSRatingResult
+  easyResult: FSRSRatingResult
+}
+
+export async function testFSRSAlgorithm(request: FSRSTestRequest): Promise<FSRSTestResponse> {
+  return requestJson<FSRSTestResponse>(`/api/v1/admin/fsrs-test`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+}
